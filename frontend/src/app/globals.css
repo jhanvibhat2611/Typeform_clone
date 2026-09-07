@@ -293,21 +293,26 @@ a { color: inherit; }
 .respondent-progress::-webkit-progress-bar { background: #aaa7aa; }
 .respondent-progress::-webkit-progress-value { background: #2b252d; }
 .respondent-body { min-height: 100dvh; padding: 152px 60px 110px; }
-.respondent-question { width: min(100%, 1080px); }
-.respondent-number { position: absolute; right: calc(100% + 16px); top: 10px; min-width: 24px; height: 28px; border-radius: 5px; background: #2b252d; color: white; font-size: 18px; font-weight: 600; text-align: center; padding: 2px 5px; }
-.respondent-question h1 { font-size: 40px; line-height: 1.25; }
-.respondent-question .preview-description { font-size: 24px; line-height: 1.4; margin: 22px 0 0; }
-.respondent-question .preview-answer { font-size: 40px; margin-top: 64px; padding: 12px 0 14px; border: 0; border-bottom: 2px solid #2b252d; border-radius: 0; background: transparent; box-shadow: none; color: inherit; }
+.respondent-question { --question-unit: 1px; width: min(100%, calc(1080 * var(--question-unit))); }
+/* Desktop text questions follow viewport proportions, including scaled desktop displays.
+   Keep mobile and the approved choice/dropdown screens on their existing sizing rules. */
+@media (min-width: 601px) {
+  .respondent-question:has(input.preview-answer, textarea.preview-answer) { --question-unit: clamp(0.666667px, calc(100vw / 1920), 1px); }
+}
+.respondent-number { position: absolute; right: calc(100% + 16 * var(--question-unit)); top: calc(10 * var(--question-unit)); min-width: calc(24 * var(--question-unit)); height: calc(28 * var(--question-unit)); border-radius: 5px; background: #2b252d; color: white; font-size: calc(18 * var(--question-unit)); font-weight: 600; text-align: center; padding: calc(2 * var(--question-unit)) calc(5 * var(--question-unit)); }
+.respondent-question h1 { font-size: calc(40 * var(--question-unit)); line-height: 1.25; }
+.respondent-question .preview-description { font-size: calc(24 * var(--question-unit)); line-height: 1.4; margin: calc(22 * var(--question-unit)) 0 0; }
+.respondent-question .preview-answer { font-size: calc(40 * var(--question-unit)); margin-top: calc(64 * var(--question-unit)); padding: calc(12 * var(--question-unit)) 0 calc(14 * var(--question-unit)); border: 0; border-bottom: calc(2 * var(--question-unit)) solid #2b252d; border-radius: 0; background: transparent; box-shadow: none; color: inherit; }
 .respondent-question .preview-answer::placeholder { color: #bdbabd; opacity: 1; }
 .respondent-question .preview-answer:focus { box-shadow: none; }
 .respondent-question .preview-answer:focus-visible { outline: 2px solid transparent; outline-offset: 6px; border-bottom-color: #6b586f; box-shadow: 0 1px 0 #6b586f; }
 @media (forced-colors: active) { .respondent-question .preview-answer:focus-visible { outline-color: Highlight; } }
-.respondent-question .long-answer { font-size: 28px; }
+.respondent-question .long-answer { font-size: calc(28 * var(--question-unit)); }
 .respondent-question .choice-control, .respondent-question .rating-control { margin-top: 36px; }
 .respondent-question .choice-answer { background: #eeedee; border-color: #dfdcdf; }
 .respondent-question .choice-answer.checked { background: transparent; border-color: #2b252d; }
-.respondent-actions { margin-top: 44px; }
-.respondent-actions .advance { min-width: 88px; min-height: 60px; font-size: 28px; padding: 10px 22px; border-radius: 11px; background: #2b252d; }
+.respondent-actions { margin-top: calc(44 * var(--question-unit)); }
+.respondent-actions .advance { min-width: calc(88 * var(--question-unit)); min-height: calc(60 * var(--question-unit)); font-size: calc(28 * var(--question-unit)); padding: calc(10 * var(--question-unit)) calc(22 * var(--question-unit)); border-radius: 11px; background: #2b252d; }
 .respondent-question .keyboard-hint { margin: 12px 0 0; font-size: 13px; }
 .respondent-navigation { position: fixed; bottom: max(44px, env(safe-area-inset-bottom)); right: max(28px, env(safe-area-inset-right)); display: flex; gap: 3px; z-index: 3; padding: 4px; background: #fafafaeF; border-radius: 12px; }
 .respondent-navigation button { min-height: 48px; width: 48px; padding: 8px; background: #2b252d; border-radius: 0 10px 10px 0; }

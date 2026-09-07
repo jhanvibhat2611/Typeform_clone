@@ -120,3 +120,37 @@ behavior across browsers remain unverified. This pass follows the now-usable wor
 individual-response and native-mobile reference screens are still missing. Reference quota banners,
 AI recommendations, plan actions, analytics/filter tooling and configurable welcome settings are
 intentionally absent or honest placeholders. The UI is closer, not claimed pixel-perfect.
+
+## Follow-up: desktop display-scale reproduction
+
+The prior DPR-1 measurements were correct but insufficient: a 1280x600 CSS viewport at
+devicePixelRatio 1.5 produces a 1920x900 screenshot at 100% browser zoom. On the actual public
+route this reproduced the supplied oversized screenshot: 1080 CSS-pixel underline becomes
+1620 image pixels, 40 px text becomes 60, and the 88x60 button becomes 132x90. Computed CSS
+zoom was 1 and settled transforms were none on the question and its ancestors. The winning
+fixed-pixel respondent rules caused the mismatch; no stale build is needed to reproduce it.
+This is an agent-reproduced configuration, not an independent reading of the user's OS setting.
+
+Desktop text-question dimensions now use a bounded viewport-relative CSS length at their
+source. At 1920 CSS pixels they retain their original targets; at 1280 CSS pixels they use
+720 px width, approximately 26.67 px text and 58.67x40 px OK, producing the target 1080/40/88x60
+image dimensions at DPR 1.5. No CSS zoom, page scaling, device-detection JavaScript or motion
+changes. Mobile rules, choice/dropdown screens, builder, results, welcome and success stay
+unchanged. Descriptions and question spacing use the same length; long content still scrolls.
+
+The read-only regression covers public routes at 1920x900/DPR 1, 1280x600/DPR 1.5 and
+390x844/DPR 1, checking computed styles, rectangles, centering and scrolling. Run with an
+existing short-text-first published form; every non-GET/HEAD request is blocked:
+
+```powershell
+$env:TEST_PUBLIC_URL = 'http://127.0.0.1:3001/f/<existing-public-id>'
+node frontend/tests/browser/respondent-sizing.cjs
+```
+
+The first production rebuild passed; a subsequent rebuild hit Windows VirtualAlloc memory
+exhaustion. The review frontend was paused to free memory before retrying successfully.
+All 9 frontend tests, typecheck, final production build and the three read-only sizing cases
+passed. A sandboxed browser retry timed out; the same read-only check passed outside the
+network sandbox. Desktop screenshots were inspected, including the reproduced DPR-1.5 case.
+No forms were
+republished or seeded; styling requires only a frontend deployment.
