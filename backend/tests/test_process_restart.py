@@ -24,10 +24,10 @@ class ProcessRestartTest(unittest.TestCase):
             form_id = str(uuid4())
             body = {
                 "title": "Restart verification",
-                "question": {
+                "questions": [{
                     "id": str(uuid4()), "type": "short_text", "prompt": "Your name?",
-                    "description": "This value must survive.", "required": True,
-                },
+                    "description": "This value must survive.", "required": True, "options": [],
+                }],
             }
             expected = {"id": form_id, **body}
 

@@ -2,38 +2,43 @@
 
 Source: https://docs.google.com/document/d/1IAoeus50jWRmC87cwTcee-xeE5Ml59y2Pfei78HEnaA/edit
 
-Only Stage 1 is authorized. A checked item is implemented; this is not a claim that the full assignment is complete.
+Stage 2 is implemented for review. Checked items are implemented, not a claim that the
+full assignment is complete. Further stages require authorization.
 
-## Stage 1
+## Completed through Stage 2
 
-- [x] Next.js/TypeScript frontend and FastAPI/SQLAlchemy/SQLite backend in separate directories.
-- [x] Create a form with a title and one stable-ID short-text question.
-- [x] Edit prompt, description and required setting.
-- [x] Reference-based three-panel builder with immediate live preview.
-- [x] Explicit Save with unsaved, saving, saved and error states.
-- [x] Save/load API; values and IDs persist in a configurable SQLite file.
-- [x] Client/server save validation; atomic save and rollback on failure.
-- [x] Preview answers remain in memory and cannot create submissions.
-- [x] README, architecture notes and this checklist.
-- [x] References and recordings excluded from Git.
+- [x] Next.js/TypeScript frontend and modular FastAPI/SQLAlchemy/SQLite backend.
+- [x] Create a draft, edit its title, explicit Save with unsaved/saving/saved/error states.
+- [x] Save/load through API; configurable SQLite path and backend restart persistence.
+- [x] Preserve Stage 1 form/question IDs and values through a transactional migration.
+- [x] Add/select/edit/delete questions and pointer/keyboard drag-and-drop reorder.
+- [x] Eight types: short text, long text, multiple choice, dropdown, email, number, yes/no, rating.
+- [x] Relational options with stable IDs; add/edit/delete/reorder choices.
+- [x] Prompt, description and required per question; confirmed discard on incompatible type change.
+- [x] Single-select choices and fixed rating1–5 assumptions documented.
+- [x] Atomic whole-draft saves and structural client/server validation, rollback on failure.
+- [x] Incomplete/empty drafts permitted, nonblank title retained; length limits enforced.
+- [x] Reference-based three-panel builder, picker/confirmation dialogs, proper SVG icons.
+- [x] Immediate ordered preview with reusable eight-type controls and separate temporary answers.
+- [x] Preview cannot create submissions; unsaved-change warning retained.
+- [x] README, schema/API/architecture notes, tests and verification record.
+- [x] References, recordings, databases, secrets and generated outputs excluded from Git.
+- [x] Public GitHub repository exists with the reviewed Stage 1 checkpoint.
 
 ## Required later stages — await authorization
 
-- [ ] Add/edit/delete questions and drag-and-drop reordering with stable IDs.
-- [ ] Long text, multiple choice, dropdown, email, number, yes/no, rating.
-- [ ] Per-type settings and shared reusable question controls.
 - [ ] Forms list with draft/published status and response counts.
-- [ ] Complete management: rename, duplicate and delete forms (create/title editing exist in Stage 1).
-- [ ] Publish/unpublish, immutable versions and a stable shareable public link.
-- [ ] No-login public filling: full-screen one-at-a-time flow, transitions, keyboard navigation, progress.
-- [ ] Client/server respondent validation, atomic persisted submissions, thank-you screen.
-- [ ] Responses list, individual response view and per-question summaries.
-- [ ] Typeform-like modals, inline editing, toasts and theme/thank-you settings placeholders.
-- [ ] Seed at least two published mixed-type forms with existing responses without overwriting user data.
-- [ ] Complete README: setup, stack, architecture, schema, API overview and assumptions.
-- [ ] Public GitHub repository (only when requested).
-- [ ] Hosted working application with verified persistent SQLite across restarts and redeploys (only when requested).
-- [ ] Final visual/interaction comparison, original code and interview readiness.
+- [ ] Complete form management: rename, duplicate and delete (builder title editing/create exist).
+- [ ] Publish/unpublish, publication completeness validation, immutable versions and shareable link.
+- [ ] No-login public filling: one-at-a-time flow, transitions, keyboard navigation, progress.
+- [ ] Client/server respondent validation and atomic persisted submissions; thank-you screen.
+- [ ] Responses list, individual responses and per-question summaries.
+- [ ] Remaining Typeform-like inline editing, toasts and theme/thank-you settings placeholders.
+- [ ] Seed at least two published mixed-type forms with existing responses idempotently.
+- [ ] Final README coverage and completed visual/interaction comparison.
+- [ ] Publish reviewed remaining stages to the repository only when requested.
+- [ ] Hosted application with SQLite persistence proven across restarts AND redeploys.
+- [ ] Final assignment review and interview readiness.
 
 ## Optional — wait until required scope works
 
@@ -45,5 +50,5 @@ Only Stage 1 is authorized. A checked item is implemented; this is not a claim t
 - [ ] Dark mode.
 
 Integrations/webhooks, collaboration and payment/upload questions may remain placeholders.
-Real creator authentication may be simplified to a default creator; document shared-demo limits.
+Real creator authentication may be simplified to a default creator with shared-demo limits.
 Marketing homepage and AI form generation are not required and are outside the roadmap.

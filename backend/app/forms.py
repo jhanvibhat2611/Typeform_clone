@@ -1,24 +1,25 @@
-"""The only write operation in Stage 1 is an atomic draft save."""
+"""Whole-draft persistence with structural validation and atomic writes."""
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from .models import DraftQuestion, Form
-from .schemas import DraftInput, DraftOutput, QuestionDraft
+from .models import ChoiceOption, DraftQuestion, Form
+from .schemas import DraftInput, DraftOutput, OptionDraft, QuestionDraft
 
 router = APIRouter(prefix="/api/forms", tags=["drafts"])
 
 
 def serialize(form: Form) -> DraftOutput:
-    question = form.question
     return DraftOutput(
-        id=form.id,
-        title=form.title,
-        question=QuestionDraft(
-            id=question.id, type=question.type, prompt=question.prompt,
-            description=question.description, required=question.required,
-        ),
+        id=form.id, title=form.title,
+        questions=[QuestionDraft(
+            id=q.id, type=q.type, prompt=q.prompt, description=q.description,
+            required=q.required,
+            options=[OptionDraft(id=o.id, label=o.label)
+                     for o in sorted(q.options, key=lambda o: o.position)],
+        ) for q in sorted(form.questions, key=lambda q: q.position)],
     )
 
 
@@ -31,28 +32,52 @@ def get_draft(form_id: UUID, request: Request):
         return serialize(form)
 
 
+def check_ownership(session, form_id: str, draft: DraftInput) -> None:
+    question_ids = {str(q.id) for q in draft.questions}
+    option_parents = {str(o.id): str(q.id) for q in draft.questions for o in q.options}
+    all_ids = question_ids | option_parents.keys()
+    for question in session.scalars(select(DraftQuestion).where(DraftQuestion.id.in_(all_ids))):
+        if question.id not in question_ids or question.form_id != form_id:
+            raise HTTPException(409, "A question ID belongs to another form or is used as an option.")
+    for option in session.scalars(select(ChoiceOption).where(ChoiceOption.id.in_(all_ids))):
+        if option_parents.get(option.id) != option.question_id:
+            raise HTTPException(409, "An option ID belongs to another question or is used as a question.")
+
+
 @router.put("/{form_id}", response_model=DraftOutput)
 def save_draft(form_id: UUID, draft: DraftInput, request: Request):
-    # Client-generated UUIDs make retrying the same create/save safe: PUT is idempotent.
     try:
         with request.app.state.sessions.begin() as session:
+            # Serialize writes before ownership reads to prevent a concurrent stale check.
+            session.connection().exec_driver_sql("BEGIN IMMEDIATE")
+            check_ownership(session, str(form_id), draft)
             form = session.get(Form, str(form_id))
             if form is None:
                 form = Form(id=str(form_id), title=draft.title)
-                form.question = DraftQuestion(
-                    id=str(draft.question.id), type="short_text", position=0
-                )
                 session.add(form)
-            elif form.question.id != str(draft.question.id):
-                raise HTTPException(409, "The question ID does not belong to this draft.")
-
             form.title = draft.title
-            form.question.prompt = draft.question.prompt
-            form.question.description = draft.question.description
-            form.question.required = draft.question.required
+            existing = {q.id: q for q in form.questions}
+            ordered_questions = []
+            for position, incoming in enumerate(draft.questions):
+                question = existing.get(str(incoming.id)) or DraftQuestion(id=str(incoming.id))
+                question.type = incoming.type
+                question.position = position
+                question.prompt = incoming.prompt
+                question.description = incoming.description
+                question.required = incoming.required
+                options = {o.id: o for o in question.options}
+                ordered_options = []
+                for option_position, incoming_option in enumerate(incoming.options):
+                    option = options.get(str(incoming_option.id)) or ChoiceOption(id=str(incoming_option.id))
+                    option.label = incoming_option.label
+                    option.position = option_position
+                    ordered_options.append(option)
+                question.options = ordered_options
+                ordered_questions.append(question)
+            # delete-orphan removes omitted questions/options in this same transaction.
+            form.questions = ordered_questions
             session.flush()
             result = serialize(form)
-        # The context manager commits before a success response can be returned.
         return result
     except IntegrityError as exc:
         raise HTTPException(409, "Draft conflict. Reload the saved draft before retrying.") from exc

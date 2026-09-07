@@ -6,28 +6,36 @@ from .database import Base
 
 class Form(Base):
     __tablename__ = "forms"
-
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     title: Mapped[str] = mapped_column(String(160))
-    question: Mapped["DraftQuestion"] = relationship(
-        back_populates="form", cascade="all, delete-orphan", uselist=False
+    questions: Mapped[list["DraftQuestion"]] = relationship(
+        back_populates="form", cascade="all, delete-orphan",
+        order_by="DraftQuestion.position",
     )
 
 
 class DraftQuestion(Base):
     __tablename__ = "draft_questions"
-    __table_args__ = (
-        CheckConstraint("type = 'short_text'", name="stage_one_question_type"),
-        CheckConstraint("position = 0", name="stage_one_question_position"),
-    )
-
+    __table_args__ = (CheckConstraint("position >= 0"),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    form_id: Mapped[str] = mapped_column(
-        ForeignKey("forms.id", ondelete="CASCADE"), unique=True
-    )
-    type: Mapped[str] = mapped_column(String(30), default="short_text")
-    position: Mapped[int] = mapped_column(default=0)
+    form_id: Mapped[str] = mapped_column(ForeignKey("forms.id", ondelete="CASCADE"))
+    type: Mapped[str] = mapped_column(String(30))
+    position: Mapped[int] = mapped_column()
     prompt: Mapped[str] = mapped_column(Text)
     description: Mapped[str] = mapped_column(Text, default="")
     required: Mapped[bool] = mapped_column(Boolean, default=False)
-    form: Mapped[Form] = relationship(back_populates="question")
+    form: Mapped[Form] = relationship(back_populates="questions")
+    options: Mapped[list["ChoiceOption"]] = relationship(
+        back_populates="question", cascade="all, delete-orphan",
+        order_by="ChoiceOption.position",
+    )
+
+
+class ChoiceOption(Base):
+    __tablename__ = "choice_options"
+    __table_args__ = (CheckConstraint("position >= 0"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    question_id: Mapped[str] = mapped_column(ForeignKey("draft_questions.id", ondelete="CASCADE"))
+    label: Mapped[str] = mapped_column(Text)
+    position: Mapped[int] = mapped_column()
+    question: Mapped[DraftQuestion] = relationship(back_populates="options")

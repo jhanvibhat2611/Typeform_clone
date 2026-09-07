@@ -1,0 +1,47 @@
+"use client";
+
+import { Star } from "lucide-react";
+import type { Question } from "../lib/drafts";
+
+export type PreviewAnswer = string;
+
+// Controlled inputs can later be reused by the respondent flow. No network access.
+export function QuestionControl({ question, value, onChange, inputId }: {
+  question: Question; value: PreviewAnswer; onChange: (answer: PreviewAnswer) => void; inputId: string;
+}) {
+  const common = {
+    id: inputId, value, required: question.required,
+    "aria-labelledby": inputId + "-label",
+    "aria-describedby": question.description ? inputId + "-description" : undefined,
+  };
+  if (question.type === "multiple_choice" || question.type === "yes_no" || question.type === "rating") {
+    const options = question.type === "yes_no" ? [{ id: "yes", label: "Yes" }, { id: "no", label: "No" }] :
+      question.type === "rating" ? [1, 2, 3, 4, 5].map((n) => ({ id: String(n), label: String(n) })) : question.options;
+    return <div role="radiogroup" aria-labelledby={inputId + "-label"}
+      aria-required={question.required} className={question.type === "rating" ? "rating-control" : "choice-control"}>
+      {options.map((option, index) => <label key={option.id} className={"choice-answer" + (value === option.id ? " checked" : "")}>
+        <input type="radio" name={inputId} value={option.id} checked={value === option.id}
+          aria-label={option.label || "Choice " + (index + 1)} onChange={() => onChange(option.id)} />
+        {question.type === "rating" ? <Star size={24} fill={Number(value) >= index + 1 ? "currentColor" : "none"} /> :
+          <span className="choice-letter">{String.fromCharCode(65 + index % 26)}</span>}
+        <span>{option.label || "Choice " + (index + 1)}</span>
+      </label>)}
+      {options.length === 0 && <p className="empty-hint">Add choices to preview this question.</p>}
+    </div>;
+  }
+  if (question.type === "dropdown") {
+    return <select {...common} className="preview-answer" onChange={(event) => onChange(event.target.value)}>
+      <option value="">Select an option</option>
+      {question.options.map((option, index) => <option key={option.id} value={option.id}>{option.label || "Choice " + (index + 1)}</option>)}
+    </select>;
+  }
+  if (question.type === "long_text") {
+    return <textarea {...common} className="preview-answer long-answer" rows={4}
+      placeholder="Type your answer here…" onChange={(event) => onChange(event.target.value)} />;
+  }
+  return <input {...common} className="preview-answer"
+    type={question.type === "email" ? "email" : question.type === "number" ? "number" : "text"}
+    step={question.type === "number" ? "any" : undefined}
+    placeholder={question.type === "email" ? "name@example.com" : "Type your answer here…"}
+    autoComplete="off" onChange={(event) => onChange(event.target.value)} />;
+}
