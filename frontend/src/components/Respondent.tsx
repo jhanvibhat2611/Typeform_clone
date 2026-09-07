@@ -38,7 +38,7 @@ export function Respondent({ publicId }: { publicId: string }) {
     });
     return () => { active = false; };
   }, [publicId, reload]);
-  function focusAnswer() { controls.current?.querySelector<HTMLElement>('input, textarea, select')?.focus({ preventScroll: true }); }
+  function focusAnswer() { controls.current?.querySelector<HTMLElement>('input, textarea, select, [role=combobox]')?.focus({ preventScroll: true }); }
   useEffect(() => { if (!busy && !moving) { if (question) focusAnswer(); else if (index === -1) startButton.current?.focus({ preventScroll: true }); } }, [index, form, busy, moving]);
   useEffect(() => {
     if (success || !Object.values(answers).some(Boolean)) return;
@@ -113,8 +113,8 @@ export function Respondent({ publicId }: { publicId: string }) {
     {loadError && <><p role="alert">{loadError}</p><button className="primary" onClick={() => setReload(value => value + 1)}>Retry</button></>}
   </main>;
   if (success) return <main className="respondent-state thank-you">
-    <CheckCircle2 size={88} strokeWidth={1.3} aria-hidden="true"/>
-    <h1>Thanks for completing<br/>this form</h1><p>Your response has been received.</p>
+    <CheckCircle2 size={112} strokeWidth={1.3} aria-hidden="true"/>
+    <h1>Thanks for completing this form</h1><p>Your response has been received.</p><a className="primary" href="/">Create a form</a>
   </main>;
   if (!question && index !== -1) return <main className="respondent-state"><h1>This form is unavailable</h1></main>;
   const final = index === form.snapshot.questions.length - 1;

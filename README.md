@@ -152,8 +152,8 @@ answers. [Architecture](docs/architecture.md) explains keys/migration/transactio
   Unsaved/unsubmitted content has an unload warning. No partial-response storage exists.
 - Default shared creator, no private isolation; multiple editor tabs are last-save-wins.
 - Visual fidelity is approximate, not pixel-perfect. System sans approximates the reference
-  font; builder/results text and spacing are denser. Usable loaded-dashboard and individual-
-  response detail references are missing, and exact original animation timing is unverified.
+  font; builder/results text and spacing are denser. The latest pass uses a loaded-dashboard reference; individual-response detail and native
+  mobile references are still missing, and exact original animation timing is unverified.
   See the [final visual comparison](docs/final-audit.md#visual-comparison).
 - Hosted SQLite uses the Railway volume at /data. The user verified that a new response
   survived redeployment with the normal start command. This audit did not restart or
@@ -188,8 +188,9 @@ Answers remain in the respondent's question-ID map, independently of the display
 No schema, API, publication or persistence changes were made.
 
 Enter advances short text, email and number after validation. Long text keeps Enter for
-newlines and uses Ctrl+Enter to advance. Native input/select/radio arrows keep their normal
-behavior. Outside those controls, Up/Down navigates without submitting; the final Down arrow is disabled. Tab reaches the navigation buttons,
+newlines and uses Ctrl+Enter to advance. Text-input and radio arrows keep their normal
+behavior. The dropdown uses a styled select-only combobox: arrows, Home/End and typing move
+the active choice, Enter/Space selects, Escape cancels, and Tab closes without trapping focus. Outside those controls, Up/Down navigates without submitting; the final Down arrow is disabled. Tab reaches the navigation buttons,
 which also support Enter/Space. Holding a key does not repeatedly advance. Focus returns
 to the new answer, and invalid answers keep focus on their field. The focused underline
 thickens; forced-colour mode uses a visible outline. Submission retries retain their original
@@ -397,3 +398,6 @@ Deleting a draft question cannot erase historical answers. Whole-form deletion e
 removes dependent records atomically. Snapshot updates are blocked by a database trigger.
 See [API overview](docs/api.md) for all draft, publication, public submission, workspace
 and version-specific results routes and their validation/error contracts.
+
+See [focused UI fidelity verification](docs/ui-fidelity-verification.md) for the latest
+respondent, builder, workspace and results changes and local review instructions.

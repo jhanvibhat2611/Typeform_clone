@@ -1,5 +1,7 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
+import { ChoiceDropdown } from "./ChoiceDropdown";
 import { Star } from "lucide-react";
 import type { Question } from "../lib/drafts";
 
@@ -9,6 +11,20 @@ export type PreviewAnswer = string;
 export function QuestionControl({ question, value, onChange, inputId, error }: {
   question: Question; error?: string; value: PreviewAnswer; onChange: (answer: PreviewAnswer) => void; inputId: string;
 }) {
+  const textarea = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const element = textarea.current;
+    if (!element) return;
+    const grow = () => {
+      element.style.height = 'auto';
+      const style = getComputedStyle(element);
+      const borders = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+      element.style.height = Math.min(element.scrollHeight + borders, 240) + 'px';
+    };
+    grow();
+    window.addEventListener('resize', grow);
+    return () => window.removeEventListener('resize', grow);
+  }, [value, question.type]);
   const common = {
     id: inputId, value, required: question.required,
     "aria-labelledby": inputId + "-label",
@@ -32,13 +48,10 @@ export function QuestionControl({ question, value, onChange, inputId, error }: {
     </div>;
   }
   if (question.type === "dropdown") {
-    return <select {...common} className="preview-answer" onChange={(event) => onChange(event.target.value)}>
-      <option value="">Select an option</option>
-      {question.options.map((option, index) => <option key={option.id} value={option.id}>{option.label || "Choice " + (index + 1)}</option>)}
-    </select>;
+    return <ChoiceDropdown question={question} value={value} onChange={onChange} inputId={inputId} error={error}/>;
   }
   if (question.type === "long_text") {
-    return <textarea {...common} className="preview-answer long-answer" rows={4}
+    return <textarea ref={textarea} {...common} className="preview-answer long-answer" rows={1}
       placeholder="Type your answer here…" onChange={(event) => onChange(event.target.value)} />;
   }
   return <input {...common} className="preview-answer"

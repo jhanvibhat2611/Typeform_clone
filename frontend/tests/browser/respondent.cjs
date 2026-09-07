@@ -19,7 +19,7 @@ async function request(path, body) {
   const pub = (await request(`/api/forms/${form.id}/publish`,{title:form.title,questions})).publication;
   const browser = await chromium.launch({channel:process.env.TEST_BROWSER || 'msedge',headless:true});
   try {
-    const page = await browser.newPage({viewport:{width:1918,height:898}});
+    const page = await browser.newPage({viewport:{width:1920,height:898},deviceScaleFactor:1});
     let failOnce = true; const bodies=[];
     await page.route('**/api/**', async route=>{
       const url=new URL(route.request().url());
@@ -40,6 +40,16 @@ async function request(path, body) {
     await settle(); await heading.waitFor();
     await page.waitForFunction(()=>document.querySelector('[data-panel=active]').getAnimations().length===0);
     const box=await heading.boundingBox(); console.log('Reference heading position:',box); assert.ok(box.y>290 && box.y<340);
+    const sizing = await page.locator('[data-panel=active] .respondent-question').evaluate(element => {
+      const input = element.querySelector('input');
+      const button = element.querySelector('.advance').getBoundingClientRect();
+      return { width: input.getBoundingClientRect().width, heading: getComputedStyle(element.querySelector('h1')).fontSize,
+        input: getComputedStyle(input).fontSize, buttonWidth: button.width, buttonHeight: button.height,
+        focusedShadow: getComputedStyle(input).boxShadow, zoom: visualViewport.scale };
+    });
+    assert.deepEqual(sizing, {width:1080,heading:'40px',input:'40px',buttonWidth:88,buttonHeight:60,
+      focusedShadow:'rgb(107, 88, 111) 0px 1px 0px 0px',zoom:1});
+    console.log('Desktop sizing:', sizing);
     await page.screenshot({path:artifacts+'/stage5-desktop.png'});
     await next().focus();await next().press('ArrowDown');assert.equal(await heading.textContent(),questions[0].prompt+' *');await page.locator('.respondent-error').waitFor();
     assert.equal(await page.locator('#public-answer').evaluate(e=>e===document.activeElement),true);
@@ -52,7 +62,15 @@ async function request(path, body) {
     await page.locator('#public-answer').press('Enter');await settle();assert.equal(await page.locator('textarea').inputValue(),'First line\na');
     await page.locator('textarea').press('Control+Enter');await settle();
     await page.getByRole('radio',{name:'First',exact:true}).check();await page.getByRole('radio',{name:'First',exact:true}).press('ArrowDown');assert.ok((await heading.textContent()).includes('multiple_choice'));assert.equal(await page.getByRole('radio',{name:'Second',exact:true}).isChecked(),true);
-    await next().click();await settle();await page.locator('select').selectOption(questions[3].options[0].id);await page.locator('select').press('ArrowDown');assert.ok((await heading.textContent()).includes('dropdown'));await next().click();await settle();
+    await next().click();await settle();const combo = page.getByRole('combobox');
+    await next().click(); await page.locator('.respondent-error').waitFor();
+    assert.equal(await combo.evaluate(e=>e===document.activeElement),true);
+    await combo.press('ArrowDown'); await combo.press('End'); await combo.press('Escape');
+    assert.equal(await combo.getAttribute('aria-expanded'),'false');
+    await combo.press('ArrowDown'); await combo.press('Home'); await combo.press('Enter');
+    assert.equal(await combo.innerText(),'First');
+    await back().click();await settle();await next().click();await settle();
+    assert.equal(await page.getByRole('combobox').innerText(),'First');assert.ok((await heading.textContent()).includes('dropdown'));await next().click();await settle();
     await page.locator('#public-answer').fill('invalid');await page.locator('#public-answer').press('Enter');assert.ok((await heading.textContent()).includes('email'));await page.locator('.respondent-error').waitFor();
     await page.locator('#public-answer').fill('review@example.com');await page.locator('#public-answer').press('Enter');await settle();
     await page.locator('#public-answer').fill('0');await page.locator('#public-answer').press('Enter');await settle();
@@ -73,9 +91,9 @@ async function request(path, body) {
     for(let i=0;i<types.length;i++) {
       const paper=page.locator('.preview-paper');
       if(['multiple_choice','yes_no','rating'].includes(types[i])) await paper.getByRole('radio').first().check();
-      else if(types[i]==='dropdown') await paper.locator('select').selectOption(questions[i].options[0].id);
+      else if(types[i]==='dropdown') { await paper.getByRole('combobox').click(); await paper.getByRole('option',{name:'First',exact:true}).click(); }
       else await paper.locator('input,textarea').fill(types[i]==='number'?'0':'Preview only');
-      assert.equal(await paper.locator('input,textarea,select').first().evaluate(e=>Boolean(e.closest('.respondent-shell'))),false);
+      assert.equal(await paper.locator('input,textarea,select,[role=combobox]').first().evaluate(e=>Boolean(e.closest('.respondent-shell'))),false);
       if(i===0) await page.screenshot({path:artifacts+'/stage5-builder-preview.png'});
       if(i<types.length-1) await page.locator('.preview-navigation').getByRole('button',{name:'Next question'}).click();
     }

@@ -203,3 +203,14 @@ existing migrations, then writes only missing seed identities. Initial timestamp
 actual seed time and are never rewritten on repeat. Results remain ordinary versioned
 results queries. Railway execution must occur inside the deployed backend container to
 reach its /data volume; local environment injection alone cannot access remote files.
+
+
+## Focused final UI fidelity pass
+
+QuestionControl now delegates dropdown rendering to ChoiceDropdown, a controlled select-only
+combobox shared by preview and public filling. It emits the same option-ID strings; optional
+clearing emits the existing empty value. Long text grows locally to a bounded height. Respondent
+validation, attempt identity, acknowledgement checks and paired question transitions are unchanged.
+Welcome entrance is CSS-only and disabled for reduced motion and outgoing panels. Dashboard and
+results layout changes use the existing queries and actions, with no schema/API changes. See
+[UI verification](ui-fidelity-verification.md) for actual browser checks and reference limitations.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, Columns2, FileText, Plus, Smartphone, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Columns2, FileText, Plus, Smartphone, Trash2, Palette, CheckCircle2 } from "lucide-react";
 import {
   changeType, isChoice, loadDraft, newDraft, newQuestion, saveDraft, selectionAfterDelete,
   validateDraft, type Draft, type DraftErrors, type Question, type QuestionType, typeLabels,
@@ -194,11 +194,10 @@ export function Builder() {
           onChange={(event) => update({ ...draft, title: event.target.value })} />
         <span className="draft-tag">{publication?.published ? "Published" : "Draft"}</span>
       </div>
-      <div className="content-tab">Content</div>
+      <nav className="builder-navigation" aria-label="Form navigation"><span aria-current="page">Content</span><button aria-disabled="true">Workflow <small>Coming Soon</small></button><button aria-disabled="true">Connect <small>Coming Soon</small></button><button onClick={() => setShareOpen(true)} disabled={busy || !publication}>Share</button><a href={"/forms/" + draft.id + "/results"} aria-disabled={busy || !savedJson} onClick={event => { if (busy || !savedJson) event.preventDefault(); }}>Results</a></nav>
       <div className="header-actions">
         <span className={"save-status " + status} role="status"><span className="status-dot" />{statusLabels[status]}</span>
-        <a className="secondary" href={"/forms/" + draft.id + "/results"} aria-disabled={busy || !savedJson} onClick={event => { if (busy || !savedJson) event.preventDefault(); }}>Results</a>
-        <button className="secondary" onClick={() => setShareOpen(true)} disabled={busy || !publication}>Share</button>
+
         <button className="secondary" onClick={createNew} disabled={busy}>New form</button>
         <button className="primary" onClick={save} disabled={busy || !dirty}>{busy ? "Saving…" : "Save"}</button>
         {publication?.published && <button className="secondary" disabled={busy} onClick={() => changePublication(true)}>Unpublish</button>}
@@ -233,13 +232,16 @@ export function Builder() {
             <Plus size={16} />Add content
           </button>
         </section>
+        <section className="panel endings-panel" aria-label="Endings"><h2>Endings</h2>
+          <button type="button" aria-disabled="true"><CheckCircle2 size={20}/><span>Thank-you screen<small>Coming Soon</small></span><Plus size={18}/></button>
+        </section>
       </aside>
       <section className="canvas" aria-label="Live preview">
         <div className="panel preview-toolbar">
           <button className="primary add-content" disabled={busy || draft.questions.length >= 200} onClick={() => setPickerOpen(true)}>
             <Plus size={17} />Add content
           </button>
-          <span className="toolbar-divider" /><Smartphone size={18} aria-hidden="true" /><span>Live preview</span>
+          <span className="toolbar-divider" /><button className="toolbar-placeholder" aria-disabled="true"><Palette size={20}/>Design <small>Coming Soon</small></button><span className="toolbar-divider" /><Smartphone size={18} aria-hidden="true" /><span>Live preview</span>
         </div>
         <Preview key={draft.id} questions={draft.questions} selectedId={selectedId} onSelect={setSelectedId} />
       </section>
