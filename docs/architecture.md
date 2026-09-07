@@ -1,4 +1,4 @@
-# Architecture — Stage 4
+# Architecture
 
 One Next.js/TypeScript frontend calls one modular FastAPI application. SQLAlchemy uses
 SQLite through Python's built-in driver. No additional dependency or service was added
@@ -25,7 +25,7 @@ unpublish clears only the pointer. The public UUID and link remain stable.
 
 Published forms need at least one question, nonblank prompts and, for either choice type,
 at least two nonblank options. Multiple choice and dropdown are single-select. Rating is
-fixed to integer1–5. Snapshot JSON includes schema_version=1, title/form ID, every common
+fixed to integer 1–5. Snapshot JSON includes schema_version=1, title/form ID, every common
 question field, stable option IDs/labels, array order plus explicit positions, and frozen
 choice/rating settings. SQLite always rejects snapshot updates. Deletion is permitted only after the publication
 record has been removed, as part of confirmed whole-form deletion. Standalone history
@@ -57,7 +57,7 @@ questions/options later change or disappear. Display helpers resolve labels from
 snapshot and test key presence, preserving 0/false and distinguishing optional omissions.
 
 Summaries include answered/unanswered counts, all configured option buckets (including zero
-counts), Yes/No and fixed1–5 rating distributions, text/email values and numeric minimum/
+counts), Yes/No and fixed 1–5 rating distributions, text/email values and numeric minimum/
 maximum. No summaries mix versions, and no views/completion-rate data is invented. Tables
 scroll horizontally inside their region; summary cards use the reference's white-on-grey
 layout. The latest version is selected initially and the selector/UUID make that explicit.
@@ -96,7 +96,7 @@ Unpublished forms reject new submissions.
 For each attempt the browser generates one submission UUID at first submission and reuses
 it on retries. Within BEGIN IMMEDIATE the server first looks up that UUID. An identical
 canonical request returns the original acknowledgement even after unpublishing; changed
-content returns409. This check never inserts another row. For a new UUID, the same locked
+content returns 409. This check never inserts another row. For a new UUID, the same locked
 transaction checks publication status/version ownership, validates all answers, and inserts
 the submission plus every answer before a single commit. Unpublish uses the same writer
 lock, giving these actions a defined order. The primary key also enforces uniqueness.
@@ -109,7 +109,7 @@ The canonical request is retained for exact conflict checks; it contains respons
 must receive the same privacy/backup treatment as answers.
 
 After network/5xx uncertainty, the UI freezes the submitted payload and offers retry. It
-never assumes failure means nothing committed. Definite422/409 rejection retains answers
+never assumes failure means nothing committed. Definite 422/409 rejection retains answers
 and permits correction/retry. A thank-you screen requires the matching server acknowledgement.
 Attempt/answers live only in tab memory; refreshing starts a new attempt and may discard
 answers after the unload warning. There is no resume link or partial-response persistence.
@@ -118,7 +118,7 @@ answers after the unload warning. There is no resume link or partial-response pe
 
 The original transactional 0 -> 2 migration is retained. Stage 3 adds a forward-only 2 -> 3
 migration in migrations_v3.py: back up through SQLite's backup API, create four tables,
-indexes/immutability triggers, allocate public IDs for existing forms and record version3.
+indexes/immutability triggers, allocate public IDs for existing forms and record version 3.
 All existing draft columns/rows remain untouched. The backup is
 <database filename>.stage2-backup.sqlite3 beside the configured file; an existing backup
 is never overwritten. Fresh setup runs these migrations followed by Stage 4 below. Repeat startup is a no-op; unknown
@@ -126,19 +126,19 @@ versions fail without resetting data. No automatic downgrade exists.
 
 Stop the prior backend before upgrading; use the same SQLITE_PATH. It is absolute or
 relative to backend/, default data/typeform.sqlite3. Foreign keys are enabled on every
-connection; the lock timeout is10 seconds. Keep backups and the database directory writable.
+connection; the lock timeout is 10 seconds. Keep backups and the database directory writable.
 Restoring an old backup requires a deliberate stopped-server procedure and loses later data.
 
-Hosting persistence is unresolved. Before deployment approval, choose a persistent mount
-and budget, then create a draft/submission, restart, redeploy a changed build, and retrieve
-identical IDs/values after each. Keep database/journals under the mount and establish a
-SQLite-safe backup/restore procedure. No paid resource or deployment was created.
+Railway is configured with a /data persistent volume and SQLITE_PATH=/data/typeform.sqlite3.
+The user reports a response survived redeployment with the normal Uvicorn command restored.
+This is user-verified evidence; the final audit only performed live read-only checks.
+See README for exact deployment/seed commands, credit dependence and backup limitations.
 
 Stage 4 retains all prior migration code and adds 3 -> 4 in migrations_v4.py. It creates
 <database filename>.stage3-backup.sqlite3 and transactionally replaces only the snapshot
 DELETE trigger. No tables, row values, IDs or public links are rewritten. Updates remain
 unconditionally blocked. Unpublished forms still have publication records and retain their
-protected history. Fresh databases traverse the full chain; schema version is now4.
+protected history. Fresh databases traverse the full chain; schema version is now 4.
 
 ## UI references and limits
 
@@ -146,8 +146,8 @@ Builder/picker/settings PNGs were inspected in earlier stages. Stage 3 reinspect
 choice respondent, thank-you and share PNGs. The share reference contains only a loading
 screen; its dialog follows existing panel/plum-button styles. The respondent uses a quiet
 full-screen canvas, prominent wording, choice cards, progress and plum actions. System
-sans approximates the typography; no licensed font asset was supplied. Recordings were
-not watched; the extracted PNGs are the inspected source and remain excluded from Git.
+sans approximates the typography; no licensed font asset was supplied. The final audit inspected extracted PNGs; historical recording/frame inspection is
+recorded in stage-5-verification.md. Exact original animation timing remains unverified.
 
 Single-line Enter advances; multiline Enter inserts a newline and Ctrl+Enter advances.
 Native select/radio keys and text editing shortcuts are left to their controls. Back keeps
@@ -160,8 +160,8 @@ loading screen: only its header/navigation is usable, so form-card placement is 
 Responses and summary references contain usable table/card layouts. No AI/integration,
 performance or views controls were added.
 
-Multiple creator tabs still use last-successful-save-wins. Repeatable sample seeding and
-final deployment remain for the next stage; no commit/push/deploy occurred in this stage.
+Multiple creator tabs still use last-successful-save-wins. Explicit seeding and hosting
+are now in place; dated stage reports remain historical evidence, not current release status.
 
 
 ## Stage 5 respondent presentation
@@ -170,15 +170,15 @@ Only Respondent.tsx and public-scoped CSS alter application behavior. The shared
 QuestionControl component and all backend contracts are unchanged. Index -1 represents
 the welcome screen, which renders the published snapshot title and neutral introductory
 text. It is never part of the question array, validation or answer map. Start/Enter moves
-to index0. No settings, API fields or database migrations were added.
+to index 0. No settings, API fields or database migrations were added.
 
 moveTo holds a synchronous ref lock, then mounts the outgoing and incoming viewport
-panels in the same render. Both translate together over600ms with identical easing;
+panels in the same render. Both translate together over 600 ms with identical easing;
 Forward moves up and Back down. The outgoing panel is inert and aria-hidden with distinct
 control IDs, and preserves its previous internal scroll offset. Each active panel starts
 at its own scroll origin; no scrollIntoView is used. Focus waits until movement ends and
 uses preventScroll. Unmount cancels both animations. Reduced motion replaces movement
-with a350ms repeated-click guard. Answer state lives above both panels, keyed by question
+with a 350 ms repeated-click guard. Answer state lives above both panels, keyed by question
 ID. Validation runs before advancing. Only the explicit OK/Submit/retry action or applicable
 text Enter shortcut can submit; navigation arrows never submit or retry. Existing UUID,
 inFlight guard, snapshot ownership and submission transaction rules remain unchanged.

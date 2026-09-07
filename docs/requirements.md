@@ -1,73 +1,53 @@
-# Assignment roadmap
+# Assignment requirements and evidence
 
-Source: https://docs.google.com/document/d/1IAoeus50jWRmC87cwTcee-xeE5Ml59y2Pfei78HEnaA/edit
+Source: [complete original assignment](https://docs.google.com/document/d/1IAoeus50jWRmC87cwTcee-xeE5Ml59y2Pfei78HEnaA/edit).
+Final audit: 2026-09-08. Implemented does not mean every interaction was re-executed on the
+hosted site. Current tests use temporary/local data; hosted verification is read-only.
+See [final audit](final-audit.md) for commands, limitations and concrete visual differences.
 
-Repeatable demo seeding is implemented for review after the Stage 5 checkpoint. Checked items are implemented, not a claim that the
-full assignment is complete. Further stages require authorization.
+| Mandatory requirement | Implementation | Evidence and remaining limits |
+| --- | --- | --- |
+| Next.js/TypeScript, Python backend, SQLite; frontend/ and backend/ | Implemented; FastAPI/SQLAlchemy | Manifests, source and current typecheck/backend tests |
+| Title and ordered question CRUD, drag-and-drop | Builder, SortableList, draft service | Current editor/draft tests; historical Stage 2 browser drag checks; hosted mutations not repeated |
+| Eight types | Shared QuestionControl, schemas and validation | Current tests and both live snapshots cover all eight; Stage 5 browser report covers controls |
+| Required toggle and descriptions | QuestionSettings and snapshot fields | Draft/publication tests; live builder inspection |
+| Immediate live preview | Preview uses local definition and separate answers | Historical browser checks; no submission import/call in Preview |
+| Form list, status, response counts | Dashboard and workspace queries | Live two published forms; counts 6/5 agree with all-version submissions |
+| Create, rename, duplicate, delete | Workspace endpoints/dialogs; fresh duplicate IDs; atomic delete | Current workspace tests; Stage 4 browser report; no hosted CRUD in final audit |
+| Publish/unpublish, stable share link | Immutable versions and separate publication pointer | Current publication tests; both live public GETs and welcome screens |
+| Persist form definitions | Relational drafts and migration chain | Current draft/migration/process restart tests |
+| One-question fullscreen flow, transitions, progress, keyboard | Respondent with approved welcome, paired directional panels, navigation guard | Current validation tests; Stage 5 browser motion/keyboard report; final live Start and mobile required error; exact reference timing unverified |
+| Client/server validation | Shared frontend rules, Pydantic and exact-snapshot server validation | Current tests cover types, required, options, wrong versions, zero/false and invalid requests |
+| Persist submissions, thank-you after success; no login | Transactional submissions/answers, public route | Current tests and historical success/retry browser checks; live read-only no-login access |
+| Responses list/table and individual full response | Results and snapshot-based detail | Current results tests; final hosted table/dialog/API inspection |
+| Basic per-question summaries | Explicit version-specific distributions/text/numeric values | Current two-version tests; live summary totals; 0/No/unanswered rendered distinctly |
+| Typeform-like modals, inline editing, notifications/toasts | Builder/workspace/share/confirmation dialogs | Source and historical stage browser checks; final visual review remains approximate |
+| Theme and thank-you placeholders | Accessible Coming Soon settings | Live builder and source inspected |
+| Seed a couple of published mixed forms with responses | Explicit app.seed, two forms, five fictional submissions each | Four current seed tests: exact summaries, all types, idempotency, preserved edits/unrelated data; both live samples present |
+| README setup, stack, architecture, schema, API, assumptions | README and architecture/API documents finalized for this checkpoint | Compared against current models, migrations, routes and manifests; included in the authorized documentation checkpoint |
+| Public GitHub repository | Existing public repository, master | Unauthenticated GitHub API confirmed public; source directories and README tracked locally |
+| Hosted working application | Vercel frontend + Railway backend/volume | Live reads succeeded; user verified response survived redeploy; account/volume/restart not independently exercised |
+| Strong reference visual fidelity | Reference-inspired implementation | Concrete gaps in final audit; exact match is not established |
+| Original work and ability to explain every line | Author responsibility | Cannot be certified by automated tests; final interview/manual review required |
 
-## Completed through Stage 5
+The default shared creator is allowed by the brief: creator APIs have no authentication or
+private isolation. Incomplete drafts are intentional; publication requires completeness.
+Multiple choice/dropdown are single-select with at least two nonblank options; rating is 1–5.
+Older published snapshots accept submissions while the form remains published. Preview never
+stores responses. Dashboard counts include all versions; summaries explicitly select one.
 
-- [x] Next.js/TypeScript frontend and modular FastAPI/SQLAlchemy/SQLite backend.
-- [x] Create a draft, edit its title, explicit Save with unsaved/saving/saved/error states.
-- [x] Save/load through API; configurable SQLite path and backend restart persistence.
-- [x] Preserve Stage 1 form/question IDs and values through a transactional migration.
-- [x] Add/select/edit/delete questions and pointer/keyboard drag-and-drop reorder.
-- [x] Eight types: short text, long text, multiple choice, dropdown, email, number, yes/no, rating.
-- [x] Relational options with stable IDs; add/edit/delete/reorder choices.
-- [x] Prompt, description and required per question; confirmed discard on incompatible type change.
-- [x] Single-select choices and fixed rating1–5 assumptions documented.
-- [x] Atomic whole-draft saves and structural client/server validation, rollback on failure.
-- [x] Incomplete/empty drafts permitted, nonblank title retained; length limits enforced.
-- [x] Reference-based three-panel builder, picker/confirmation dialogs, proper SVG icons.
-- [x] Immediate ordered preview with reusable eight-type controls and separate temporary answers.
-- [x] Preview cannot create submissions; unsaved-change warning retained.
-- [x] README, schema/API/architecture notes, tests and verification record.
-- [x] References, recordings, databases, secrets and generated outputs excluded from Git.
-- [x] Public GitHub repository exists with reviewed Stage 1 through Stage 5 checkpoints.
+## Optional and outside completed scope
 
-- [x] Immutable complete snapshots, separate publication state and stable public UUID/link.
-- [x] Atomic publish of current editor contents; unpublish/republish at the same link.
-- [x] Share dialog and copy-link feedback; draft Save leaves live version unchanged.
-- [x] Publication completeness validation including at least two nonblank choice options.
-- [x] No-login public one-question flow, transitions, progress, back/next and keyboard behavior.
-- [x] Shared controls with separate respondent validation, field errors and retained answers.
-- [x] Reduced-motion CSS and responsive respondent layout (see verification limits).
-- [x] Exact-version server validation; older versions accepted while still published.
-- [x] Atomic persisted submissions/relational answers and confirmed thank-you screen.
-- [x] Retry UUID uniqueness, identical acknowledgements and conflicts for changed content.
-- [x] Existing successful retries acknowledged after unpublish; new attempts blocked.
-- [x] Stage 1/2 migration preservation, restart persistence, rollback and retry tests.
-- [x] Dedicated API documentation and updated setup/architecture.
+Branching/logic jumps, custom themes, CSV export, partial responses/completion rates,
+file uploads and dark mode are optional and not implemented. Integrations, team management,
+payment/upload features may be mocked under the brief; no implementation was added.
+Marketing homepage, AI generation and configurable welcome editor are outside the agreed scope.
+No remaining optional feature is treated as a submission blocker.
 
-- [x] Forms dashboard with saved title, draft/published status and actual all-version response counts.
-- [x] Create/rename/independent duplicate/confirmed atomic delete including responses.
-- [x] Explicit version selection, response table, snapshot-based individual responses and summaries.
-- [x] Existing inline title editing, workspace modals/toasts and accessible Coming Soon theme/thank-you placeholders.
-- [x] Version4 migration preserves all existing draft/publication/response data.
-- [x] No invented views/completion rates; responsive table and summary layouts.
+## Historical evidence
 
-- [x] Reference-aligned public respondent layout and directional vertical transitions.
-- [x] Simultaneous directional panels, inert outgoing content, navigation repeat guard and reduced motion.
-- [x] Simple published-title welcome screen; navigation arrows never submit.
-- [x] Stage 5 browser verification across eight controls, retry and builder preview.
-
-## Required later stages — await authorization
-
-- [ ] Run reviewed seed command against the deployed mounted database (manual, not performed).
-- [ ] Final README coverage and completed visual/interaction comparison.
-- [ ] Publish reviewed remaining stages to the repository only when requested.
-- [ ] Hosted application with SQLite persistence proven across restarts AND redeploys.
-- [ ] Final assignment review and interview readiness.
-
-## Optional — wait until required scope works
-
-- [ ] Branching / logic jumps.
-- [ ] Custom themes.
-- [ ] CSV export.
-- [ ] Partial-response tracking / completion rate.
-- [ ] File uploads.
-- [ ] Dark mode.
-
-Integrations/webhooks, collaboration and payment/upload questions may remain placeholders.
-Real creator authentication may be simplified to a default creator with shared-demo limits.
-Marketing homepage and AI form generation are not required and are outside the roadmap.
+[Stage 1](stage-1-verification.md), [Stage 2](stage-2-verification.md),
+[Stage 3](stage-3-verification.md), [Stage 4](stage-4-verification.md),
+[Stage 5](stage-5-verification.md), [seeding](seeding-verification.md).
+Their original results are retained with dated supersession notes. New final evidence does
+not retroactively convert earlier unverified checks into executed checks.

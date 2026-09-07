@@ -1,3 +1,7 @@
+> Historical report. Note added 2026-09-08: current release, seeding and hosting status
+> is recorded in [the final audit](final-audit.md). Original evidence below is preserved;
+> pending/no-deploy statements describe that stage only.
+
 # Demo seeding verification
 
 Implemented for review; no hosted database, live local database or deployment was modified.

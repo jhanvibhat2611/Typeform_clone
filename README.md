@@ -1,50 +1,67 @@
-# Typeform-inspired builder — Stage 5
+# Typeform Builder
+
+- [Live demo](https://typeform-clone-rosy.vercel.app)
+- [Public repository](https://github.com/jhanvibhat2611/Typeform_clone)
+- [Live backend API documentation](https://typeformclone-production.up.railway.app/docs)
+- [Final assignment audit](docs/final-audit.md), [requirements](docs/requirements.md),
+  [architecture and schema](docs/architecture.md), [API contracts](docs/api.md).
 
 A Next.js/TypeScript builder with FastAPI, SQLAlchemy and SQLite. Build eight question
 types, save incomplete drafts, publish an immutable version, share a stable public link,
 and collect validated, persisted responses through a one-question-at-a-time public flow.
 
-Stage 5 is committed. Explicit, repeatable demo seeding is now implemented for review.
-Existing drafts and Git history are preserved. See [roadmap](docs/requirements.md),
-[architecture](docs/architecture.md), [API contracts](docs/api.md),
-[respondent verification](docs/stage-5-verification.md) and [seed verification](docs/seeding-verification.md).
+## Prerequisites and installation
 
-Deployment URLs supplied for this project (not deployed or modified by this stage):
+Install Git, Python 3.12+ and Node.js 22.18+ (or Node 24 LTS), including npm.
+Commands below use Windows PowerShell and start from a fresh clone:
 
-- Frontend: https://typeform-clone-rosy.vercel.app
-- Backend: https://typeformclone-production.up.railway.app
+```powershell
+git clone https://github.com/jhanvibhat2611/Typeform_clone.git
+cd Typeform_clone
+py -3.12 -m venv backend/.venv
+.\backend\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+cd frontend
+npm.cmd ci
+Copy-Item .env.example .env.local
+cd ..
+```
+
+Set frontend/.env.local to `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000` for local use.
+The backend template documents shell variables; it is not automatically loaded.
+On Linux/macOS use `python3 -m venv backend/.venv`, `backend/.venv/bin/python`
+and `npm` instead of the Windows interpreter paths and `npm.cmd`.
 
 ## Stack
 
-Next.js16 / React19 / TypeScript5.9, plain CSS, dnd-kit sorting and Lucide SVG icons.
-Python3.12+, FastAPI, Pydantic, Uvicorn, SQLAlchemy2 and built-in SQLite. Backend unittest/
-HTTPX and Node's built-in test runner. No new Stage 4 dependency or infrastructure.
+Next.js 16 / React 19 / TypeScript 5.9, plain CSS, dnd-kit sorting and Lucide SVG icons.
+Python 3.12+, FastAPI, Pydantic, Uvicorn, SQLAlchemy 2 and built-in SQLite. Backend unittest/
+HTTPX and Node's built-in test runner. No external database or queue service is required.
 Python requirements are pinned; frontend resolution is in package-lock.json.
-Use Node.js22.18+ or24 LTS for the frontend tests.
+Use Node.js 22.18+ or 24 LTS for the frontend tests.
 
 ## Run locally
 
-Dependencies are installed in this workspace. If ports3000/8000 are already running, use
-the existing servers. Otherwise open separate PowerShell terminals.
+After installation, open two PowerShell terminals at the repository root.
 
 Backend:
 
 ```powershell
-cd 'C:\Users\LENOVO\Documents\ChatGPT\Scaler assignment\backend'
+cd backend
 $env:SQLITE_PATH = 'data/typeform.sqlite3'
+$env:FRONTEND_ORIGINS = 'http://localhost:3000,http://127.0.0.1:3000'
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 Frontend:
 
 ```powershell
-cd 'C:\Users\LENOVO\Documents\ChatGPT\Scaler assignment\frontend'
+cd frontend
 npm.cmd run dev
 ```
 
 Open http://127.0.0.1:3000; API docs: http://127.0.0.1:8000/docs. Ctrl+C stops a server.
 For a production frontend locally, run npm.cmd run build, then npm.cmd run start instead
-of dev. Both use port3000. Keep the configured backend running.
+of dev. Both use port 3000. Keep the configured backend running.
 
 The root URL opens the forms workspace. Create form persists an empty draft and opens
 its builder. Existing /?form={id} URLs still work. Forms breadcrumbs return to the workspace.
@@ -67,20 +84,7 @@ or Submit to advance. Errors focus the answer. Network failure retains answers a
 a retry with the same attempt UUID/payload. Thank-you appears only after confirmed success.
 Editor Preview remains local and never stores responses.
 
-## Fresh setup / upgrade
-
-From the repository root on Windows, with Python3.12+ and Node.js22.18+ installed:
-
-```powershell
-py -3.12 -m venv backend/.venv
-.\backend\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
-cd frontend
-npm.cmd ci
-```
-
-Without the Windows launcher use python -m venv with a suitable interpreter. On macOS/Linux
-use python3 -m venv backend/.venv, backend/.venv/bin/python to install/run backend commands,
-and npm instead of npm.cmd. Then run the servers above.
+## Database migrations and upgrades
 
 Before upgrading, stop the old backend and retain the SAME SQLITE_PATH. Startup runs the
 original 0 -> 2 migration if needed, then 2 -> 3 and 3 -> 4. Existing draft rows/IDs are not
@@ -113,7 +117,7 @@ Creator endpoints remain shared-demo APIs without authentication or access isola
 
 | Variable | Default | Behavior |
 | --- | --- | --- |
-| SQLITE_PATH | data/typeform.sqlite3 | Absolute or relative to backend/ |
+| SQLITE_PATH | data/typeform.sqlite3 | Absolute, or relative to the backend directory (also the process working directory in the local commands) |
 | FRONTEND_ORIGINS | http://localhost:3000,http://127.0.0.1:3000 | Comma-separated backend CORS origins |
 | NEXT_PUBLIC_API_URL | http://127.0.0.1:8000 | Browser API origin; rebuild for production changes |
 
@@ -135,26 +139,32 @@ answers. [Architecture](docs/architecture.md) explains keys/migration/transactio
 
 - Eight types: short/long text, multiple choice, dropdown, email, number, yes/no, rating.
 - Choice types are single-select and need at least TWO nonblank choices to publish.
-  Rating uses fixed integer1–5. No custom range/scale settings in this stage.
+  Rating uses fixed integer 1–5. No custom range/scale settings in this stage.
 - Drafts may be empty/incomplete; publication requires nonblank prompts and at least one
-  question. Title stays nonblank. Title max160; prompt1000; description2000; option500;
-  at most200 questions and100 options each, measured in Unicode code points.
+  question. Title stays nonblank. Title max 160; prompt 1000; description 2000; option 500;
+  at most 200 questions and 100 options each, measured in Unicode code points.
 - Optional omission/null/blank answers have no answer row. False and zero remain valid.
 - Email uses a documented practical ASCII format check without DNS verification. Browser
   numbers use JavaScript precision; the backend requires finite JSON numbers.
-- One UUID per respondent attempt makes retries safe. Same UUID with changed content is409.
+- One UUID per respondent attempt makes retries safe. Same UUID with changed content is 409.
   Exact successful retries remain acknowledged after unpublish without inserting anything.
 - Answers/attempts live in tab memory until submission; reload does not resume an attempt.
   Unsaved/unsubmitted content has an unload warning. No partial-response storage exists.
 - Default shared creator, no private isolation; multiple editor tabs are last-save-wins.
-- System sans approximates reference typography; no supplied font asset was available.
-- Persistent SQLite HOSTING remains unresolved. A deployment must prove data survives
-  both restart and redeploy on persistent storage. No paid resources were created.
+- Visual fidelity is approximate, not pixel-perfect. System sans approximates the reference
+  font; builder/results text and spacing are denser. Usable loaded-dashboard and individual-
+  response detail references are missing, and exact original animation timing is unverified.
+  See the [final visual comparison](docs/final-audit.md#visual-comparison).
+- Hosted SQLite uses the Railway volume at /data. The user verified that a new response
+  survived redeployment with the normal start command. This audit did not restart or
+  redeploy the service; see the deployment evidence and limits below.
 
 ## Checks
 
+Run from the repository root. These commands test temporary databases, not the hosted database.
+
 ```powershell
-cd 'C:\Users\LENOVO\Documents\ChatGPT\Scaler assignment\backend'
+cd backend
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 cd '..\frontend'
 npm.cmd test
@@ -164,11 +174,11 @@ npm.cmd run build
 
 Backend tests use temporary SQLite databases, including migration fixtures, workspace/results, concurrency,
 rollback and two real Uvicorn process runs. [Stage 4 verification](docs/stage-4-verification.md)
-distinguishes performed browser checks from remaining limitations. Stage1/2/3 verification
+distinguishes performed browser checks from remaining limitations. Stage 1/2/3 verification
 documents are historical records; later stages deliberately change their scope.
 
 
-## Stage 5 respondent navigation
+## Respondent navigation
 
 Public forms have a wide question area, numbered heading badge, underline answer controls,
 compact OK button, top progress line and fixed lower-right Up/Down buttons. Forward exits
@@ -187,12 +197,12 @@ payload and UUID. Preview controls retain their previous styling and never submi
 
 See [Stage 5 verification](docs/stage-5-verification.md) for references, browser checks and
 remaining differences. A simple snapshot-title welcome screen now precedes question one; Start or Enter begins.
-No configurable welcome-screen editor, seeding or deployment was added.
+The welcome screen has no configurable editor; it uses the published title.
 
 Optional browser integration check: `frontend/tests/browser/respondent.cjs` requires an
 existing Playwright installation and Microsoft Edge (or TEST_BROWSER channel). Start a
-separate backend with SQLITE_PATH pointing at a disposable database and port8001, and a
-frontend on port3001. From the repository root, set PLAYWRIGHT_MODULE to the installed
+separate backend with SQLITE_PATH pointing at a disposable database and port 8001, and a
+frontend on port 3001. From the repository root, set PLAYWRIGHT_MODULE to the installed
 Playwright package path and run `node frontend/tests/browser/respondent.cjs`. TEST_API,
 TEST_UI and TEST_ARTIFACTS override those defaults. The check routes browser API calls to
 the disposable backend, creates fresh test forms/responses there, and intentionally fails
@@ -210,7 +220,7 @@ tool is not a runtime application dependency; normal setup/test commands are unc
 | Product Feedback | Rating, multiple choice, yes/no, number, long text, email |
 
 Questions include help text, required and optional answers, and meaningful single-select
-choices. Fixtures include numeric0, No, and omitted optional answers, with example.com
+choices. Fixtures include numeric 0, No, and omitted optional answers, with example.com
 emails only. They are fictional demo records, not collected user responses. Results use
 real relational answers and immutable snapshots; no dashboard numbers are fabricated.
 
@@ -231,7 +241,7 @@ SQLITE_PATH=data/typeform.sqlite3 python -m app.seed
 
 The command prints the resolved database path, form IDs, public IDs and created/skipped-existing
 status. Public URLs are the frontend origin plus `/f/{public_id}`; builder URLs use `/?form={form_id}`.
-First run creates two forms, two published versions, ten submissions and55 answer rows.
+First run creates two forms, two published versions, ten submissions and 55 answer rows.
 Submissions get timestamps when first seeded; subsequent runs preserve all timestamps.
 
 A fixed UUID namespace and semantic keys identify forms/questions/options/versions/responses;
@@ -248,12 +258,12 @@ roll back both new forms and their responses. Concurrent writers use the same SQ
 The command reuses normal draft/publication/submission validation and persistence services.
 There is no seed/reset endpoint and no startup/request hook.
 
-## Seed the mounted Railway database (manual, after review)
+## Seed the mounted Railway database (explicit maintenance command)
 
-These are instructions only. This stage did not commit, push, deploy or access the hosted
-database. First deploy the reviewed backend code through your normal release process so
-`app/seed.py` exists in the running service. A Vercel frontend deployment alone does not
-install this backend command. No deployment command is executed here.
+**User-verified hosted seeding:** the user reports that both sample forms were seeded
+and are visible in the deployed application.
+These commands are for deliberate future execution; the final audit did not run them.
+The deployed backend must contain app/seed.py. A frontend-only deployment cannot install it.
 
 Confirm in Railway that the BACKEND service uses SQLITE_PATH=/data/typeform.sqlite3 and
 has its persistent volume mounted at /data. Use the running backend service and correct
@@ -300,7 +310,7 @@ python -c "import os; assert os.path.ismount('/data'), '/data is not mounted'; a
 ```
 
 Run the same command again to confirm both records report `skipped-existing`. Then refresh
-https://typeform-clone-rosy.vercel.app and check both sample cards show Published and5 responses
+https://typeform-clone-rosy.vercel.app and check both sample cards show Published and 5 responses
 on their initial seed. If they were already edited/unpublished, the command preserves that
 state instead. Results are read from the mounted backend database at
 https://typeformclone-production.up.railway.app, not from the frontend filesystem.
@@ -310,3 +320,80 @@ NOT attach the remote volume. Setting SQLITE_PATH=/data/typeform.sqlite3 on your
 cannot seed Railway's database. Use the SSH session above for remote execution.
 See Railway's [SSH documentation](https://docs.railway.com/cli/ssh) and
 [CLI local-development distinction](https://docs.railway.com/cli).
+
+## Confirmed hosting configuration and evidence
+
+| Service | Setting | Value |
+| --- | --- | --- |
+| Railway backend | Source root | /backend |
+| Railway backend | Persistent volume mount | /data |
+| Railway backend | SQLITE_PATH | /data/typeform.sqlite3 |
+| Railway backend | FRONTEND_ORIGINS | https://typeform-clone-rosy.vercel.app |
+| Vercel | Source root | frontend |
+| Vercel | NEXT_PUBLIC_API_URL | https://typeformclone-production.up.railway.app |
+
+The leading slash matters: `/data/typeform.sqlite3` is an **absolute Linux path** inside
+Railway's mounted `/data` volume. Without the slash, `data/typeform.sqlite3` is relative
+to this application's backend directory and may write to the container's ephemeral
+filesystem instead of the volume. Use `SQLITE_PATH=/data/typeform.sqlite3` in the deployed
+backend. The relative path remains appropriate for local development. The documented commands
+run with `backend/` as the process working directory, so the relative value resolves
+there. More precisely, `database_path()` anchors relative paths to the backend directory
+using its module location, even if the process is launched from another working directory.
+Neither path on your own computer accesses the Railway volume.
+
+Normal Railway start command (Linux shell; $PORT is supplied by Railway):
+
+```sh
+python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+If SSH is unavailable, an explicit temporary startup seed is an alternative: in the
+Railway BACKEND service settings, temporarily replace the start command with:
+
+```sh
+python -m app.seed && exec python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+Keep SQLITE_PATH=/data/typeform.sqlite3 and the mounted /data volume configured. This runs
+INSIDE the deployed runtime, not locally or during image build. After successful seed logs
+and checking both forms, restore the normal command above and redeploy. Do not leave the
+seed command in routine startup. Existing seed identities are skipped, preserving edits.
+No reset or table-clearing command is needed. Retain SQLite-safe backups outside the volume
+before destructive maintenance; application migrations also make local upgrade backups.
+
+**User-verified evidence, reported 2026-09-08:** both samples appeared and a newly submitted
+response survived redeployment after restoration of the normal start command. The final
+audit independently read the running forms/results, but did not perform that redeployment
+or inspect the Railway account/volume directly. A separate hosted restart and backup restore
+exercise were not independently performed.
+
+Hosting availability depends on Railway plan limits and remaining credits. Trial credits
+are time/usage limited, and expired-trial volumes have a retention limit; this is not an
+indefinite free-hosting promise. Check the account before assessment and keep a backup.
+See Railway's [trial policy](https://docs.railway.com/pricing/free-trial) and
+[plans](https://docs.railway.com/pricing/plans) (reviewed 2026-09-08).
+
+## Actual database relationships
+
+| Table | Key fields and relationships |
+| --- | --- |
+| forms | id PK, editable title |
+| draft_questions | id PK; form_id FK -> forms; type, position, prompt, description, required |
+| choice_options | id PK; question_id FK -> draft_questions; label, position |
+| form_versions | id PK; form_id FK -> forms; immutable snapshot JSON text, created_at |
+| publications | form_id PK/FK -> forms; unique public_id; nullable active_version_id; composite FK ensures active version belongs to this form |
+| submissions | id PK (attempt UUID); version_id FK -> form_versions; canonical request_json, created_at |
+| answers | PK(submission_id, question_id); submission_id FK -> submissions; value_json scalar |
+
+The migration in `backend/app/migrations_v3.py` defines
+`FOREIGN KEY(form_id, active_version_id) REFERENCES form_versions(form_id, id)`, backed
+by `UNIQUE(form_id, id)` on form_versions. This is the composite constraint described above.
+
+One form has many draft questions and versions, one publication record, and responses
+through versions. Questions have many options; submissions have many answers. Answer
+question IDs refer to snapshot membership, deliberately not to mutable draft rows.
+Deleting a draft question cannot erase historical answers. Whole-form deletion explicitly
+removes dependent records atomically. Snapshot updates are blocked by a database trigger.
+See [API overview](docs/api.md) for all draft, publication, public submission, workspace
+and version-specific results routes and their validation/error contracts.

@@ -16,3 +16,6 @@ typeform-references/
 **/.env.*
 !**/.env.example
 .artifacts/
+*.zip
+*.log
+**/.pytest_cache/

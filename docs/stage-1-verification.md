@@ -1,3 +1,7 @@
+> Historical report. Note added 2026-09-08: later release, seeding and hosting status is
+> recorded in [the final audit](final-audit.md). Original checks and limitations below
+> are preserved; stage-specific pending/no-deploy statements describe that stage only.
+
 # Stage 1 verification — 2026-09-07
 
 ## Checks actually performed
