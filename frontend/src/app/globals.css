@@ -154,3 +154,49 @@ h2 { font-size: 14px; font-weight: 600; margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+/* Published forms use the reference's quiet canvas, large type and plum actions. */
+.app-header { grid-template-columns: minmax(180px, 1fr) auto; }
+.content-tab { display: none; }
+.header-actions { flex-wrap: wrap; }
+.share-heading { display: flex; justify-content: space-between; align-items: center; }
+.share-dialog { width: min(560px, 92vw); }
+.share-dialog label { display: block; font-size: 12px; }
+.share-dialog input { width: 100%; padding: 10px; margin: 8px 0 18px; border: 1px solid var(--line); border-radius: 6px; }
+.share-dialog a { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.respondent-shell { min-height: 100dvh; background: #fafafa; display: flex; flex-direction: column; }
+.respondent-header { display: flex; justify-content: space-between; gap: 24px; padding: 18px 24px; color: var(--muted); font-size: 12px; }
+.respondent-header span:first-child { overflow-wrap: anywhere; }
+.respondent-header span:last-child { white-space: nowrap; }
+.respondent-progress { display: block; appearance: none; width: 100%; height: 4px; border: 0; background: #e5e2e7; }
+.respondent-progress::-webkit-progress-bar { background: #e5e2e7; }
+.respondent-progress::-webkit-progress-value { background: var(--plum); transition: width .25s; }
+.respondent-progress::-moz-progress-bar { background: var(--plum); }
+.respondent-body { flex: 1; display: flex; padding: 50px 24px; }
+.respondent-question { width: min(100%, 660px); margin: auto; animation: question-enter .25s ease-out; }
+.respondent-question h1 { font-size: 30px; font-weight: normal; margin: 0; }
+.respondent-question .preview-description { font-size: 18px; }
+.respondent-question .preview-answer { font-size: 26px; margin-top: 30px; }
+.respondent-question .long-answer { font-size: 22px; }
+.respondent-question .choice-answer { padding: 13px; font-size: 20px; }
+.respondent-question .rating-control .choice-answer { font-size: 15px; }
+.respondent-inputs { border: 0; margin: 0; padding: 0; min-width: 0; }
+.respondent-actions { display: flex; gap: 10px; margin-top: 30px; }
+.respondent-actions button { min-height: 46px; font-size: 18px; }
+.respondent-actions .advance { min-width: 130px; }
+.keyboard-hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.respondent-error { color: #9e273d; background: #fbe9ee; padding: 10px 12px; border-radius: 5px; line-height: 1.5; }
+.respondent-state { min-height: 100dvh; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #fafafa; }
+.respondent-state h1 { font-size: 30px; line-height: 1.4; font-weight: normal; }
+@keyframes question-enter { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 1200px) { .app-header { height: auto; min-height: 58px; } .header-actions { gap: 6px; } .header-actions .save-status { flex-basis: 100%; justify-content: flex-end; } }
+@media (max-width: 850px) { .header-actions .save-status { flex-basis: 100%; justify-content: flex-start; } }
+@media (max-width: 600px) {
+  .respondent-body { padding: 30px 22px; }
+  .respondent-header { padding: 15px 22px; }
+  .respondent-question h1 { font-size: 24px; }
+  .respondent-question .preview-description { font-size: 16px; }
+  .respondent-question .preview-answer { font-size: 22px; }
+  .respondent-question .choice-answer { font-size: 18px; }
+  .respondent-actions .advance { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .respondent-question, .respondent-progress::-webkit-progress-value { animation: none; transition: none; } }

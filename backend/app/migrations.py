@@ -21,7 +21,7 @@ CREATE TABLE draft_questions_v2 (
 """
 
 
-def migrate(engine: Engine, path: Path) -> None:
+def migrate_stage_two(engine: Engine, path: Path) -> None:
     # SQLite's backup API includes committed journal/WAL data. Never overwrite a backup.
     with closing(sqlite3.connect(path)) as source:
         version = source.execute("PRAGMA user_version").fetchone()[0]
@@ -78,3 +78,14 @@ def migrate(engine: Engine, path: Path) -> None:
         except Exception:
             connection.rollback()
             raise
+
+
+def migrate(engine: Engine, path: Path) -> None:
+    from .migrations_v3 import migrate_publication
+    with closing(sqlite3.connect(path)) as connection:
+        version = connection.execute("PRAGMA user_version").fetchone()[0]
+    if version == 3:
+        return
+    # Keep the original 0 -> 2 migration intact, then apply the additive migration.
+    migrate_stage_two(engine, path)
+    migrate_publication(engine, path)

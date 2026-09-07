@@ -11,6 +11,8 @@ import { QuestionPicker } from "./QuestionPicker";
 import { QuestionSettings } from "./QuestionSettings";
 import { QuestionTypeIcon } from "./QuestionTypeIcon";
 import { SortableList } from "./SortableList";
+import { ApiError, getPublication, publishDraft, unpublishForm, type Publication } from "../lib/publication";
+import { ShareDialog } from "./ShareDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
 
 type SaveState = "unsaved" | "saving" | "saved" | "error";
@@ -19,6 +21,10 @@ const statusLabels: Record<SaveState, string> = {
 };
 
 export function Builder() {
+  const [publication, setPublication] = useState<Publication | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [publicationError, setPublicationError] = useState("");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [savedJson, setSavedJson] = useState<string | null>(null);
@@ -41,12 +47,13 @@ export function Builder() {
       setSelectedId(loaded.questions[0]?.id ?? null);
       setSavedJson(JSON.stringify(loaded));
       setStatus("saved");
+      getPublication(loaded.id).then(value => { if (active) setPublication(value); }).catch(() => { if (active) setPublicationError("Could not load publication status. Reload before publishing."); });
     }).catch((error: Error) => { if (active) setLoadError(error.message); });
     return () => { active = false; };
   }, [reloadKey]);
 
   const dirty = draft !== null && JSON.stringify(draft) !== savedJson;
-  const busy = status === "saving";
+  const busy = status === "saving" || publishing;
   useEffect(() => {
     if (!dirty) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
@@ -100,6 +107,9 @@ export function Builder() {
   }
 
   function resetDraft() {
+    setPublication(null);
+    setPublicationError("");
+    setShareOpen(false);
     window.history.replaceState(null, "", window.location.pathname);
     setDraft(newDraft());
     setSelectedId(null);
@@ -131,10 +141,40 @@ export function Builder() {
       setSavedJson(JSON.stringify(saved));
       setStatus("saved");
       window.history.replaceState(null, "", "?form=" + encodeURIComponent(saved.id));
+      getPublication(saved.id).then(setPublication).catch(() => setPublicationError("Could not load publication status. Reload to retry."));
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "Save failed. Please retry.");
     }
+  }
+
+  async function changePublication(unpublish = false) {
+    if (!draft || busy) return;
+    setPublishing(true);
+    setMessage("");
+    try {
+      if (unpublish) setPublication(await unpublishForm(draft.id));
+      else {
+        const result = await publishDraft(draft);
+        setDraft(result.draft);
+        setSavedJson(JSON.stringify(result.draft));
+        setStatus("saved");
+        setErrors({});
+        setPublication(result.publication);
+        window.history.replaceState(null, "", "?form=" + encodeURIComponent(draft.id));
+        setShareOpen(true);
+      }
+      setPublicationError("");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Publication failed. Retry.");
+      if (error instanceof ApiError && draft) {
+        const invalid = draft.questions.find(q => error.fields[q.id]);
+        if (invalid) {
+          setSelectedId(invalid.id);
+          setMessage(error.message + " " + error.fields[invalid.id]);
+        }
+      }
+    } finally { setPublishing(false); }
   }
 
   if (!draft) return <main className="loading-screen">
@@ -152,15 +192,19 @@ export function Builder() {
         <input aria-label="Form title" value={draft.title} disabled={busy}
           aria-invalid={Boolean(errors.title)} placeholder="Name your form"
           onChange={(event) => update({ ...draft, title: event.target.value })} />
-        <span className="draft-tag">Draft</span>
+        <span className="draft-tag">{publication?.published ? "Published" : "Draft"}</span>
       </div>
       <div className="content-tab">Content</div>
       <div className="header-actions">
         <span className={"save-status " + status} role="status"><span className="status-dot" />{statusLabels[status]}</span>
+        <button className="secondary" onClick={() => setShareOpen(true)} disabled={busy || !publication}>Share</button>
         <button className="secondary" onClick={createNew} disabled={busy}>New form</button>
         <button className="primary" onClick={save} disabled={busy || !dirty}>{busy ? "Saving…" : "Save"}</button>
+        {publication?.published && <button className="secondary" disabled={busy} onClick={() => changePublication(true)}>Unpublish</button>}
+        <button className="primary" disabled={busy || Boolean(publicationError)} onClick={() => changePublication()}>{publishing ? "Updating…" : publication?.published ? "Republish" : "Publish"}</button>
       </div>
     </header>
+    {publicationError && <div className="error-banner" role="alert">{publicationError}</div>}
     {message && <div className="error-banner" role="alert">{message}</div>}
     <main className="builder-grid">
       <aside className="outline" aria-label="Form questions">
@@ -204,6 +248,7 @@ export function Builder() {
           <p className="empty-hint">Select or add a question to edit its settings.</p>}
       </aside>
     </main>
+    {shareOpen && publication && <ShareDialog publication={publication} onClose={() => setShareOpen(false)} />}
     {pickerOpen && <QuestionPicker onChoose={addQuestion} onClose={() => setPickerOpen(false)} />}
     {confirmation && <ConfirmDialog message={confirmation.message}
       onCancel={() => setConfirmation(null)}

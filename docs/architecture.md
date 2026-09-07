@@ -1,109 +1,117 @@
-# Architecture
+# Architecture — Stage 3
 
-## Stage 2: implemented
+One Next.js/TypeScript frontend calls one modular FastAPI application. SQLAlchemy uses
+SQLite through Python's built-in driver. No additional dependency or service was added
+in Stage 3. Creator access remains a shared demo with no login or private workspace.
 
-One Next.js/TypeScript frontend calls one modular FastAPI application over JSON HTTP.
-SQLAlchemy uses SQLite through Python's built-in driver. The default creator is shared;
-there is no authentication or private workspace isolation.
+## Drafts and publication
 
-Builder owns the editable definition, selected question ID and last saved JSON.
-Settings, the sortable outline and preview read that same ordered questions array.
-Preview owns a separate in-memory answer map keyed by question ID and a signature of
-its type/options. Deleted or incompatible answers are removed. QuestionControl supplies
-controlled inputs for all eight types, without API imports or submission behavior.
-Previous/Next navigates the ordered preview. Preview never writes answers to the server.
+Builder owns the draft definition and explicit Save states. QuestionControl is a controlled
+renderer shared by Preview and Respondent. Preview has its own temporary answer map and
+never imports or calls submission functions. Respondent owns navigation, validation,
+answers and the attempt UUID independently of the editor.
 
-Explicit Save validates locally, then PUTs the complete definition. Pydantic validates
-structure before any writes. A short SQLite BEGIN IMMEDIATE transaction checks identity
-ownership, reconciles questions/options by stable UUID, deletes omitted rows and assigns
-positions from array order. Success is returned only after commit. Any database failure
-rolls back the whole save; local unsaved edits remain available for correction/retry.
-Inputs are disabled while saving. A network failure can occur after commit; retrying the
-same UUIDs and PUT is safe. Multiple tabs remain last-successful-save-wins; revision
-conflict detection is a future enhancement, not extra infrastructure in this stage.
+Draft PUT accepts incomplete forms: empty question lists and blank prompts/choice labels.
+Title remains nonblank. Stable question/option IDs are independent of their array order.
+The shared persist_draft service reconciles definitions and relational positions inside
+its caller's transaction, including omitted-row deletions and ownership checks.
 
-## Schema and validation
+Publish POST receives the current editor payload, not just a request to publish whatever
+was last saved. Structural and completeness validation precede writing. BEGIN IMMEDIATE
+locks the SQLite writer; one transaction saves that exact draft, inserts a new immutable
+snapshot and changes the active publication pointer. Failure rolls back all three.
+Ordinary draft Save never changes the active version. Republish creates a new version;
+unpublish clears only the pointer. The public UUID and link remain stable.
 
-| Table | Columns / relationships |
+Published forms need at least one question, nonblank prompts and, for either choice type,
+at least two nonblank options. Multiple choice and dropdown are single-select. Rating is
+fixed to integer1–5. Snapshot JSON includes schema_version=1, title/form ID, every common
+question field, stable option IDs/labels, array order plus explicit positions, and frozen
+choice/rating settings. SQLite triggers reject updates/deletes of version rows. This stage
+has no version pruning or form deletion workflow.
+
+## Schema
+
+| Table | Fields / purpose |
 | --- | --- |
-| forms | UUID id PK, title |
-| draft_questions | UUID id PK, form_id FK, type, position, prompt, description, required |
-| choice_options | UUID id PK, question_id FK, label, position |
+| forms | id UUID PK, title; editable draft title |
+| draft_questions | id PK, form_id FK, type, position, prompt, description, required |
+| choice_options | id PK, question_id FK, label, position |
+| form_versions | id PK, form_id FK, snapshot JSON text, UTC created_at; immutable |
+| publications | form_id PK/FK, unique public_id, nullable active_version_id |
+| submissions | id UUID PK, version_id FK, canonical request_json, UTC created_at |
+| answers | composite PK(submission_id, question_id), submission FK, typed value_json |
 
-Relationships cascade deletion. Foreign keys are enabled per connection. Indexes cover
-parent ID plus position. IDs are independent of ordering. Existing option IDs cannot be
-moved to another question. IDs cannot collide between questions/options or belong to
-another form. API arrays are authoritative; clients do not supply position numbers.
-SQLite uses a 10-second lock timeout and synchronous per-request sessions.
+A composite publication foreign key ensures its active version belongs to the same form.
+Answer question IDs intentionally do not reference editable draft rows: deleting a draft
+question must not invalidate a response to a published snapshot. Membership is checked
+against the exact snapshot before insertion. JSON scalars preserve string/number/boolean
+types. Missing optional answers have no answer row. Required, type and option validation
+is server authoritative. See [API documentation](api.md) for limits and examples.
 
-Supported types: short_text, long_text, multiple_choice, dropdown, email, number, yes_no,
-rating. Multiple choice and dropdown are single-select. Rating is always integer 1–5;
-no configurable rating scale, number ranges or other type settings are accepted yet.
-Choice options are allowed only on the two choice types. Changing between choice types
-retains options; changing to another type confirms discarding existing options, preserving
-question ID, prompt, description and required. Client preview answers are not persisted.
+## Submission transaction and retries
 
-Incomplete drafts deliberately relax Stage 1's nonblank-question rule: an empty question
-list, blank prompts and blank choice labels are valid. Title remains nonblank, max160;
-prompt max1000; description max2000; label max500 Unicode code points; max200 questions
-and max100 options per question. UUIDs, supported types, actual boolean required values,
-unique IDs and compatible options are enforced. Extra settings/fields are rejected.
-Complete-question and respondent-answer validation belongs to future publication/filling.
+The public route GET resolves the active snapshot once. The respondent retains that exact
+version ID while navigating, even if V2 is published later. New submissions to an older
+version remain valid while the form is published; unknown/unrelated versions are rejected.
+Unpublished forms reject new submissions.
 
-## Migration and storage
+For each attempt the browser generates one submission UUID at first submission and reuses
+it on retries. Within BEGIN IMMEDIATE the server first looks up that UUID. An identical
+canonical request returns the original acknowledgement even after unpublishing; changed
+content returns409. This check never inserts another row. For a new UUID, the same locked
+transaction checks publication status/version ownership, validates all answers, and inserts
+the submission plus every answer before a single commit. Unpublish uses the same writer
+lock, giving these actions a defined order. The primary key also enforces uniqueness.
 
-SQLITE_PATH is absolute or relative to backend/, default data/typeform.sqlite3.
-Startup runs the forward-only runner in app/migrations.py. Stage 1 is unversioned
-(PRAGMA user_version=0); Stage 2 is version2. No new backend dependency is needed.
+Canonical requests include public ID, version ID and submitted values, with answers sorted
+by question ID. Answer entry order does not affect retry identity. Missing versus explicit
+null/blank entries, different whitespace, or numeric JSON representation may change retry
+identity even when storage normalizes omission. Clients should resend the same payload.
+The canonical request is retained for exact conflict checks; it contains response data and
+must receive the same privacy/backup treatment as answers.
 
-Before migrating a recognized Stage 1 database, SQLite's backup API creates
-<database filename>.stage1-backup.sqlite3 beside it, unless that backup already exists.
-It includes committed WAL data and is ignored by Git. With the old backend stopped,
-the migration takes a write transaction, copies every question column into a replacement
-table without the old unique-form/position-zero/short-text constraints, swaps the table,
-adds options/indexes and checks foreign keys before committing version2. Form rows are
-untouched; existing values and IDs are preserved. Failure rolls back DDL and data together.
-Fresh databases use the same versioned schema; version2 startup is a no-op. Unknown
-versions/unrecognized table sets fail startup without resetting data.
+After network/5xx uncertainty, the UI freezes the submitted payload and offers retry. It
+never assumes failure means nothing committed. Definite422/409 rejection retains answers
+and permits correction/retry. A thank-you screen requires the matching server acknowledgement.
+Attempt/answers live only in tab memory; refreshing starts a new attempt and may discard
+answers after the unload warning. There is no resume link or partial-response persistence.
 
-The API changes from singular question to questions; reload old frontend tabs.
-Do not run Stage 1 against the migrated schema. There is no automatic downgrade; keep
-the backup and stop the server before an explicitly planned restore. Restoring it would
-lose later edits. Hosting must allow the database directory to be written during startup.
+## Migration and deployment
 
-## Dependencies and references
+The original transactional 0 -> 2 migration is retained. Stage 3 adds a forward-only 2 -> 3
+migration in migrations_v3.py: back up through SQLite's backup API, create four tables,
+indexes/immutability triggers, allocate public IDs for existing forms and record version3.
+All existing draft columns/rows remain untouched. The backup is
+<database filename>.stage2-backup.sqlite3 beside the configured file; an existing backup
+is never overwritten. Fresh setup runs both migrations. Repeat startup is a no-op; unknown
+versions fail without resetting data. No automatic downgrade exists.
 
-New frontend packages: @dnd-kit/core 6.3.1, @dnd-kit/sortable 10.0.0 and
-@dnd-kit/utilities 3.2.2 for pointer/keyboard sorting; lucide-react 1.41.0 for SVG icons.
-Native HTML dialogs provide the picker and discard confirmation. Plain CSS remains.
+Stop the prior backend before upgrading; use the same SQLITE_PATH. It is absolute or
+relative to backend/, default data/typeform.sqlite3. Foreign keys are enabled on every
+connection; the lock timeout is10 seconds. Keep backups and the database directory writable.
+Restoring an old backup requires a deliberate stopped-server procedure and loses later data.
 
-All nine PNGs were inspected in Stage 1; builder 02, picker 03 and settings 04 were
-reinspected for Stage 2. Compact panels, rows, plum actions, pastel type badges and a
-portrait canvas follow those references. Desktop panels scroll internally; narrow screens
-stack outline/settings/preview. System sans is an approximation because no font asset was
-supplied. Browser chrome and out-of-scope AI/upgrade toolbars are omitted. Recordings
-were not watched; extracted PNGs are the inspected visual source and remain Git-ignored.
+Hosting persistence is unresolved. Before deployment approval, choose a persistent mount
+and budget, then create a draft/submission, restart, redeploy a changed build, and retrieve
+identical IDs/values after each. Keep database/journals under the mount and establish a
+SQLite-safe backup/restore procedure. No paid resource or deployment was created.
 
-## Planned architecture — not implemented
+## UI references and limits
 
-- Immutable JSON snapshots in form_versions with an active published-version pointer.
-- Publish validates completeness and snapshots atomically; draft edits do not alter it.
-- A stable public URL opens the current version. An already-open older published version
-  may submit while the form remains published. Validate that exact snapshot, reject
-  unknown/unrelated versions and block submissions when unpublished.
-- Submissions link to the exact version; save submission and answers in one transaction.
-- Validate publication state, version ownership, question membership, duplicate answers,
-  required values, types and allowed options; preserve legitimate false and zero.
-- Public filling reuses controlled question inputs with its own validation/navigation.
-- Results use snapshot wording/options and initially group summaries by version.
-- Duplicate creates a draft with new IDs and no responses/history. Confirm form deletion.
+Builder/picker/settings PNGs were inspected in earlier stages. Stage 3 reinspected the
+choice respondent, thank-you and share PNGs. The share reference contains only a loading
+screen; its dialog follows existing panel/plum-button styles. The respondent uses a quiet
+full-screen canvas, prominent wording, choice cards, progress and plum actions. System
+sans approximates the typography; no licensed font asset was supplied. Recordings were
+not watched; the extracted PNGs are the inspected source and remain excluded from Git.
 
-## Unresolved deployment requirement
+Single-line Enter advances; multiline Enter inserts a newline and Ctrl+Enter advances.
+Native select/radio keys and text editing shortcuts are left to their controls. Back keeps
+answers. Transitions use CSS with a prefers-reduced-motion override. Field errors associate
+with the controls and focus the relevant answer. Narrow screens retain vertical scrolling
+for long questions/options rather than clipping content.
 
-SQLite must use persistent storage across restarts AND redeploys. No paid hosting resource
-has been created. Before deployment approval, select a persistent mount and budget, then
-write a uniquely identified draft, restart, redeploy a changed build and retrieve identical
-IDs/values after each. Keep database/journals under the mount; migrate where storage is
-available; seed idempotently and establish a SQLite-safe backup/restore procedure. The
-frontend can host separately using the API origin and configured CORS. Local restart tests
-do not prove hosting persistence.
+Multiple creator tabs still use last-successful-save-wins. Results, form-list management,
+seeds and deployment remain later stages. Future results must use snapshot wording/options
+and group summaries by version. A duplicate should receive new IDs and no response history.

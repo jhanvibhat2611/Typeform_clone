@@ -1,28 +1,26 @@
-# Typeform-inspired builder — Stage 2
+# Typeform-inspired builder — Stage 3
 
-A multi-question draft builder using Next.js/TypeScript, FastAPI, SQLAlchemy and SQLite.
-Add, edit, delete and reorder eight question types and choice options; preview locally;
-explicitly save and reload the whole draft. Existing Stage 1 IDs and values are migrated.
+A Next.js/TypeScript builder with FastAPI, SQLAlchemy and SQLite. Build eight question
+types, save incomplete drafts, publish an immutable version, share a stable public link,
+and collect validated, persisted responses through a one-question-at-a-time public flow.
 
-Stage 2 contains no publishing, public submissions, results, AI or deployment. Stage 1
-was published to GitHub; Stage 2 is pending review and has not been committed or pushed.
-See [architecture](docs/architecture.md), [full roadmap](docs/requirements.md) and
-[checks actually performed](docs/stage-2-verification.md).
+Stage 3 is implemented for review. No results dashboard, workspace management, AI, bonuses
+or deployment are included. No Stage 3 commit/push has been made. Existing drafts and
+Git history are preserved. See [roadmap](docs/requirements.md), [architecture](docs/architecture.md),
+[API contracts](docs/api.md) and [verification](docs/stage-3-verification.md).
 
-## Stack and dependencies
+## Stack
 
-- Next.js 16 / React 19 / TypeScript 5.9, plain CSS.
-- dnd-kit for pointer and keyboard sorting; Lucide for SVG icons.
-- Python 3.12+, FastAPI, Pydantic, Uvicorn, SQLAlchemy 2, built-in SQLite driver.
-- Python unittest/HTTPX and Node's built-in test runner. No migration framework added.
-- Python dependencies are pinned in backend/requirements.txt; frontend versions are
-  resolved in frontend/package-lock.json. Use Node.js 22.18+ or 24 LTS for the tests.
+Next.js16 / React19 / TypeScript5.9, plain CSS, dnd-kit sorting and Lucide SVG icons.
+Python3.12+, FastAPI, Pydantic, Uvicorn, SQLAlchemy2 and built-in SQLite. Backend unittest/
+HTTPX and Node's built-in test runner. No new Stage 3 dependency or infrastructure.
+Python requirements are pinned; frontend resolution is in package-lock.json.
+Use Node.js22.18+ or24 LTS for the frontend tests.
 
-## Run locally in this workspace
+## Run locally
 
-Dependencies are installed. If servers are already running, use the existing localhost
-links rather than starting a second process on the same ports. Otherwise open two
-PowerShell terminals.
+Dependencies are installed in this workspace. If ports3000/8000 are already running, use
+the existing servers. Otherwise open separate PowerShell terminals.
 
 Backend:
 
@@ -39,15 +37,29 @@ cd 'C:\Users\LENOVO\Documents\ChatGPT\Scaler assignment\frontend'
 npm.cmd run dev
 ```
 
-Open http://127.0.0.1:3000; API docs: http://127.0.0.1:8000/docs.
-Save creates the draft in SQLite. Bookmark its ?form= UUID URL for later reload.
-New form starts an empty unsaved draft and does not delete the previous form. There is
-no forms-list screen yet. Use the drag grips to reorder, or focus a grip and press Space,
-Up/Down, Space; Escape cancels sorting. Preview arrows navigate without submitting.
+Open http://127.0.0.1:3000; API docs: http://127.0.0.1:8000/docs. Ctrl+C stops a server.
+For a production frontend locally, run npm.cmd run build, then npm.cmd run start instead
+of dev. Both use port3000. Keep the configured backend running.
 
-## Fresh setup
+New form starts an empty unsaved draft. Save persists it and places its UUID in the URL;
+bookmark that URL because form listing is a later stage. Drag grips reorder questions or
+options; keyboard sorting uses Space, Up/Down, Space (Escape cancels).
 
-From the repository root on Windows, with Python 3.12+ and Node.js 22.18+ installed:
+Publish validates and saves the CURRENT editor contents in one transaction, creates a
+snapshot and opens Share. Copy link shows feedback. The public path is /f/{public_id}.
+Draft Save after publishing affects only the editor. Republish activates a new snapshot
+at the same link; Unpublish stops new responses. An already-open older version can submit
+while the form remains published.
+
+Public filling preserves answers on Back. Enter advances single-line inputs; multiline
+Enter inserts a newline, Ctrl+Enter advances. Choice/dropdown keys remain native; use OK
+or Submit to advance. Errors focus the answer. Network failure retains answers and offers
+a retry with the same attempt UUID/payload. Thank-you appears only after confirmed success.
+Editor Preview remains local and never stores responses.
+
+## Fresh setup / upgrade
+
+From the repository root on Windows, with Python3.12+ and Node.js22.18+ installed:
 
 ```powershell
 py -3.12 -m venv backend/.venv
@@ -56,105 +68,60 @@ cd frontend
 npm.cmd ci
 ```
 
-Then run the two commands above. Without the Windows launcher, use python -m venv with
-a suitable interpreter. On macOS/Linux use python3 -m venv backend/.venv, install through
-backend/.venv/bin/python, and use npm instead of npm.cmd. The first backend startup creates
-an empty version2 schema. Tests create their own temporary databases, never reset yours.
+Without the Windows launcher use python -m venv with a suitable interpreter. On macOS/Linux
+use python3 -m venv backend/.venv, backend/.venv/bin/python to install/run backend commands,
+and npm instead of npm.cmd. Then run the servers above.
 
-For a production frontend locally, run npm.cmd run build followed by npm.cmd run start
-instead of dev. Both use port3000; stop your existing frontend first.
+Before upgrading, stop the old backend and retain the SAME SQLITE_PATH. Startup runs the
+original 0 -> 2 migration if needed, then additive 2 -> 3. Existing draft rows/IDs are not
+rewritten in Stage 3. SQLite-safe backups are created beside the database as
+.stage1-backup.sqlite3 and .stage2-backup.sqlite3 when their migrations run, without
+replacing an existing backup. New publication IDs are allocated for existing forms.
+Fresh setup runs both migrations; repeat startup is a no-op. Unknown versions fail without
+resetting data. Keep the database directory writable and refresh old frontend tabs.
+There is no automatic downgrade; restoring an older backup discards subsequent data.
 
-## Configuration and migration
+## Configuration
 
 | Variable | Default | Behavior |
 | --- | --- | --- |
-| SQLITE_PATH | data/typeform.sqlite3 | Absolute or relative to backend/, regardless of shell directory. |
-| FRONTEND_ORIGINS | http://localhost:3000,http://127.0.0.1:3000 | Comma-separated backend CORS origins. |
-| NEXT_PUBLIC_API_URL | http://127.0.0.1:8000 | Public browser API origin; rebuild for production changes. |
+| SQLITE_PATH | data/typeform.sqlite3 | Absolute or relative to backend/ |
+| FRONTEND_ORIGINS | http://localhost:3000,http://127.0.0.1:3000 | Comma-separated backend CORS origins |
+| NEXT_PUBLIC_API_URL | http://127.0.0.1:8000 | Browser API origin; rebuild for production changes |
 
-.env.example files document configuration. Backend .env files are not automatically
-loaded: set environment variables in the shell. Frontend can use .env.local. Never put
-secrets in NEXT_PUBLIC_* values. Real environment files, SQLite and backup files,
-recordings, references, dependencies and build outputs stay Git-ignored.
+.env.example documents configuration. Backend does not automatically load .env; set shell
+variables. Frontend can use .env.local. NEXT_PUBLIC_* values are public, never secrets.
+Databases, backups/journals, environment files, references, recordings, dependencies and
+build output remain excluded from Git.
 
-When upgrading Stage 1, stop its backend and keep the same SQLITE_PATH. Stage 2 startup
-creates a SQLite-safe .stage1-backup.sqlite3 beside the database, then migrates in one
-transaction. It copies all question values/IDs, removes old single-question constraints,
-adds ordered relational options, checks foreign keys and records user_version=2. It does
-not delete user forms. Repeated startup skips the migration. Unknown schema/version
-fails startup; there is no automatic reset or downgrade. Reload old frontend tabs because
-the API now uses questions instead of question. See architecture for restore cautions.
+## Data flow, schema and assumptions
 
-## Data flow and schema
+React definition -> draft PUT or publish POST -> Pydantic validation -> SQLAlchemy
+transaction -> SQLite. Publish also inserts immutable snapshot JSON and activates its
+publication pointer. Public GET -> frozen snapshot -> shared controls/local answers ->
+submission POST -> exact-version validation -> submission and answer rows committed together.
 
-React holds the definition separately from preview answers. Settings and sorting update
-local state immediately. Save validates and PUTs the whole draft. Pydantic validates
-structure; a SQLAlchemy transaction verifies ID ownership and reconciles all rows and
-positions. Only commit success marks the UI saved. Rejected saves leave the previous
-stored draft intact and keep the local edits. Retrying after an ambiguous network failure
-uses the same IDs. Browser unload warns about unsaved edits.
+Tables: forms, draft_questions, choice_options, form_versions, publications, submissions,
+answers. [Architecture](docs/architecture.md) explains keys/migration/transactions;
+[API documentation](docs/api.md) includes every endpoint, payload, limit and retry behavior.
 
-| Table | Fields |
-| --- | --- |
-| forms | id UUID PK, title |
-| draft_questions | id UUID PK, form_id FK, type, position, prompt, description, required |
-| choice_options | id UUID PK, question_id FK, label, position |
-
-## API overview
-
-| Method | Route | Purpose |
-| --- | --- | --- |
-| GET | /api/health | Process health. |
-| GET | /api/forms/{uuid} | Saved ordered draft; 404 if absent. |
-| PUT | /api/forms/{uuid} | Create or atomically replace the complete draft. |
-
-PUT body (response additionally contains the form id):
-
-```json
-{
-  "title": "Student introductions",
-  "questions": [
-    {
-      "id": "f48bcebe-191d-4cfb-83cf-f3352a678bf0",
-      "type": "multiple_choice",
-      "prompt": "Your focus?",
-      "description": "Choose one.",
-      "required": true,
-      "options": [
-        {"id": "bc989022-1acd-4538-8220-3a533e101ae2", "label": "Frontend"},
-        {"id": "d6d3bd15-dfcd-449a-a28c-b639535f67bb", "label": "Backend"}
-      ]
-    }
-  ]
-}
-```
-
-Array order sets stored positions. Omitted questions/options are deleted atomically.
-Use options: [] for non-choice types. Supported types are short_text, long_text,
-multiple_choice, dropdown, email, number, yes_no and rating. Duplicate/cross-form IDs,
-option IDs moved to another question, incompatible options and extra settings are rejected.
-422 means payload validation failed; 409 means identity/integrity conflict; handled
-storage failures return503. The singular Stage 1 payload is deliberately no longer valid.
-
-## Draft assumptions and limits
-
-- Multiple choice/dropdown are single-select; rating has a fixed integer 1–5 scale.
-- Prompt, description and required apply to every type. Options apply only to choice
-  types. No custom rating scales or numeric range settings exist in this stage.
-- Incomplete drafts are allowed: zero questions, blank prompts and blank choice labels.
-  This deliberately relaxes Stage 1's nonblank-question rule. Publication will validate
-  completeness later. Title must still be nonblank and at most160 characters.
-- Prompt max1000, description max2000, choice label max500 Unicode code points;
-  at most200 questions and100 options per question. required is a JSON boolean.
-- Type changes preserve question ID and common fields; discarding options requires
-  confirmation. Preview answers are separate, temporary and cleared when incompatible.
-- Default shared creator, no private workspace isolation. Multiple tabs use
-  last-successful-save-wins. Unsaved edits are not backed up.
-- System sans approximates the supplied typography; no font asset was available.
-- Future publication accepts an already-open older snapshot only while its form remains
-  published, validates that exact version and rejects unknown/unrelated versions.
-- Hosting persistence is unresolved: SQLite must survive both restart and redeploy on a
-  persistent mount. No paid resource has been created; local tests do not prove hosting.
+- Eight types: short/long text, multiple choice, dropdown, email, number, yes/no, rating.
+- Choice types are single-select and need at least TWO nonblank choices to publish.
+  Rating uses fixed integer1–5. No custom range/scale settings in this stage.
+- Drafts may be empty/incomplete; publication requires nonblank prompts and at least one
+  question. Title stays nonblank. Title max160; prompt1000; description2000; option500;
+  at most200 questions and100 options each, measured in Unicode code points.
+- Optional omission/null/blank answers have no answer row. False and zero remain valid.
+- Email uses a documented practical ASCII format check without DNS verification. Browser
+  numbers use JavaScript precision; the backend requires finite JSON numbers.
+- One UUID per respondent attempt makes retries safe. Same UUID with changed content is409.
+  Exact successful retries remain acknowledged after unpublish without inserting anything.
+- Answers/attempts live in tab memory until submission; reload does not resume an attempt.
+  Unsaved/unsubmitted content has an unload warning. No partial-response storage exists.
+- Default shared creator, no private isolation; multiple editor tabs are last-save-wins.
+- System sans approximates reference typography; no supplied font asset was available.
+- Persistent SQLite HOSTING remains unresolved. A deployment must prove data survives
+  both restart and redeploy on persistent storage. No paid resources were created.
 
 ## Checks
 
@@ -167,5 +134,7 @@ npm.cmd run typecheck
 npm.cmd run build
 ```
 
-See [Stage 2 verification](docs/stage-2-verification.md) for outcomes and limitations.
-[Stage 1 verification](docs/stage-1-verification.md) remains a historical record.
+Backend tests use temporary SQLite databases, including migration fixtures, concurrency,
+rollback and two real Uvicorn process runs. [Stage 3 verification](docs/stage-3-verification.md)
+distinguishes performed browser checks from remaining limitations. Stage1/2 verification
+documents are historical records; later stages deliberately change their scope.

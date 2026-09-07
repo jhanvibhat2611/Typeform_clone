@@ -194,10 +194,11 @@ class DraftTests(unittest.TestCase):
         self.assertEqual(self.client.get(other_url).status_code, 404)
         self.assert_unchanged(original)
 
-    def test_no_submission_schema_or_endpoint(self):
+    def test_draft_save_does_not_create_submissions(self):
         self.save()
         with self.app.state.sessions() as session:
-            self.assertEqual(set(inspect(session.bind).get_table_names()), {"forms", "draft_questions", "choice_options"})
+            from app.models import Submission
+            self.assertEqual(session.scalar(select(func.count()).select_from(Submission)), 0)
         self.assertEqual(self.client.post("/api/submissions", json={}).status_code, 404)
 
 

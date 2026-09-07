@@ -40,7 +40,7 @@ class MigrationTests(unittest.TestCase):
                     })
             with closing(sqlite3.connect(path)) as connection, connection:
                 self.assertEqual(connection.execute("SELECT * FROM draft_questions").fetchone(), row)
-                self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 2)
+                self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 3)
                 self.assertEqual(connection.execute("PRAGMA foreign_key_check").fetchall(), [])
             self.assertTrue(path.with_name(path.name + ".stage1-backup.sqlite3").is_file())
 

@@ -45,6 +45,9 @@ threading.Thread(target=stop_on_input, daemon=True).start()
 server.run()
 """
 
+            submission = None
+            acknowledgement = None
+            public_url = None
             for boot in range(2):
                 process = subprocess.Popen(
                     [sys.executable, "-c", server_script, str(port)],
@@ -68,6 +71,14 @@ server.run()
                             saved = client.put(f"/api/forms/{form_id}", json=body)
                             self.assertEqual(saved.status_code, 200, saved.text)
                             self.assertEqual(saved.json(), expected)
+                            publication = client.post(f"/api/forms/{form_id}/publish", json=body).json()['publication']
+                            public_url = '/api/public/' + publication['public_id']
+                            submission = {'submission_id': str(uuid4()), 'version_id': publication['active_version_id'],
+                                          'answers': [{'question_id': body['questions'][0]['id'], 'value': 'Persisted answer'}]}
+                            response = client.post(public_url + '/submissions', json=submission)
+                            self.assertEqual(response.status_code, 200, response.text)
+                            acknowledgement = response.json()
+                        self.assertEqual(client.post(public_url + '/submissions', json=submission).json(), acknowledgement)
                         self.assertEqual(client.get(f"/api/forms/{form_id}").json(), expected)
                         self.assertTrue(database.is_file())
                 finally:

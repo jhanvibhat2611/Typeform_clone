@@ -2,10 +2,10 @@
 
 Source: https://docs.google.com/document/d/1IAoeus50jWRmC87cwTcee-xeE5Ml59y2Pfei78HEnaA/edit
 
-Stage 2 is implemented for review. Checked items are implemented, not a claim that the
+Stage 3 is implemented for review. Checked items are implemented, not a claim that the
 full assignment is complete. Further stages require authorization.
 
-## Completed through Stage 2
+## Completed through Stage 3
 
 - [x] Next.js/TypeScript frontend and modular FastAPI/SQLAlchemy/SQLite backend.
 - [x] Create a draft, edit its title, explicit Save with unsaved/saving/saved/error states.
@@ -23,15 +23,26 @@ full assignment is complete. Further stages require authorization.
 - [x] Preview cannot create submissions; unsaved-change warning retained.
 - [x] README, schema/API/architecture notes, tests and verification record.
 - [x] References, recordings, databases, secrets and generated outputs excluded from Git.
-- [x] Public GitHub repository exists with the reviewed Stage 1 checkpoint.
+- [x] Public GitHub repository exists with reviewed Stage 1 and Stage 2 checkpoints.
+
+- [x] Immutable complete snapshots, separate publication state and stable public UUID/link.
+- [x] Atomic publish of current editor contents; unpublish/republish at the same link.
+- [x] Share dialog and copy-link feedback; draft Save leaves live version unchanged.
+- [x] Publication completeness validation including at least two nonblank choice options.
+- [x] No-login public one-question flow, transitions, progress, back/next and keyboard behavior.
+- [x] Shared controls with separate respondent validation, field errors and retained answers.
+- [x] Reduced-motion CSS and responsive respondent layout (see verification limits).
+- [x] Exact-version server validation; older versions accepted while still published.
+- [x] Atomic persisted submissions/relational answers and confirmed thank-you screen.
+- [x] Retry UUID uniqueness, identical acknowledgements and conflicts for changed content.
+- [x] Existing successful retries acknowledged after unpublish; new attempts blocked.
+- [x] Stage 1/2 migration preservation, restart persistence, rollback and retry tests.
+- [x] Dedicated API documentation and updated setup/architecture.
 
 ## Required later stages — await authorization
 
 - [ ] Forms list with draft/published status and response counts.
 - [ ] Complete form management: rename, duplicate and delete (builder title editing/create exist).
-- [ ] Publish/unpublish, publication completeness validation, immutable versions and shareable link.
-- [ ] No-login public filling: one-at-a-time flow, transitions, keyboard navigation, progress.
-- [ ] Client/server respondent validation and atomic persisted submissions; thank-you screen.
 - [ ] Responses list, individual responses and per-question summaries.
 - [ ] Remaining Typeform-like inline editing, toasts and theme/thank-you settings placeholders.
 - [ ] Seed at least two published mixed-type forms with existing responses idempotently.
