@@ -54,28 +54,35 @@ def get_publication(form_id: UUID, request: Request):
         return publication_state(publication)
 
 
+def publish_in_session(session, form_id: str, draft: DraftInput, *, version_id: str | None = None):
+    """Publish within a caller-owned write transaction (HTTP or explicit seed command)."""
+    complete_draft(draft)
+    form = persist_draft(session, str(form_id), draft)
+    saved = serialize(form)
+    snapshot = saved.model_dump(mode='json')
+    snapshot['schema_version'] = 1
+    for position, q in enumerate(snapshot['questions']):
+        q['position'] = position
+        q['settings'] = ({'selection': 'single'} if q['type'] in {'multiple_choice', 'dropdown'} else
+                         {'min': 1, 'max': 5, 'step': 1} if q['type'] == 'rating' else {})
+        for option_position, option in enumerate(q['options']):
+            option['position'] = option_position
+    version = FormVersion(id=version_id or str(uuid4()), form_id=form.id, snapshot=canonical(snapshot), created_at=now())
+    session.add(version)
+    session.flush()
+    publication = session.get(Publication, form.id)
+    publication.active_version_id = version.id
+    result = {'draft': saved.model_dump(mode='json'), 'publication': publication_state(publication)}
+    return result
+
+
 @router.post('/api/forms/{form_id}/publish')
 def publish(form_id: UUID, draft: DraftInput, request: Request):
     complete_draft(draft)
     try:
         with request.app.state.sessions.begin() as session:
             session.connection().exec_driver_sql('BEGIN IMMEDIATE')
-            form = persist_draft(session, str(form_id), draft)
-            saved = serialize(form)
-            snapshot = saved.model_dump(mode='json')
-            snapshot['schema_version'] = 1
-            for position, q in enumerate(snapshot['questions']):
-                q['position'] = position
-                q['settings'] = ({'selection': 'single'} if q['type'] in {'multiple_choice', 'dropdown'} else
-                                 {'min': 1, 'max': 5, 'step': 1} if q['type'] == 'rating' else {})
-                for option_position, option in enumerate(q['options']):
-                    option['position'] = option_position
-            version = FormVersion(id=str(uuid4()), form_id=form.id, snapshot=canonical(snapshot), created_at=now())
-            session.add(version)
-            session.flush()
-            publication = session.get(Publication, form.id)
-            publication.active_version_id = version.id
-            result = {'draft': saved.model_dump(mode='json'), 'publication': publication_state(publication)}
+            result = publish_in_session(session, str(form_id), draft)
         return result
     except SQLAlchemyError as exc:
         raise HTTPException(503, 'Publication failed. Saved draft and live version are unchanged. Retry.') from exc
@@ -181,36 +188,42 @@ def acknowledgement(submission):
             'received_at': submission.created_at}
 
 
-@router.post('/api/public/{public_id}/submissions')
-def submit(public_id: UUID, body: SubmissionInput, request: Request):
+def submit_in_session(session, public_id: UUID, body: SubmissionInput):
+    """Validate and store within the caller's BEGIN IMMEDIATE transaction."""
     payload = body.model_dump(mode='json')
     payload['answers'].sort(key=lambda answer: answer['question_id'])
     fingerprint = canonical({'public_id': str(public_id), **payload})
+    existing = session.get(Submission, str(body.submission_id))
+    if existing:
+        if existing.request_json != fingerprint:
+            raise HTTPException(409, 'This submission ID was already used with different content.')
+        return acknowledgement(existing)
+    publication = session.scalar(select(Publication).where(Publication.public_id == str(public_id)))
+    if publication is None or publication.active_version_id is None:
+        raise HTTPException(409, 'This form is no longer accepting responses.')
+    version = session.get(FormVersion, str(body.version_id))
+    if version is None or version.form_id != publication.form_id:
+        raise HTTPException(422, 'Unknown or unrelated form version.')
+    answers = validate_answers(json.loads(version.snapshot), body.answers)
+    submission = Submission(id=str(body.submission_id), version_id=version.id,
+                            request_json=fingerprint, created_at=now())
+    session.add(submission)
+    session.flush()
+    for question_id, value in answers.items():
+        session.add(Answer(submission_id=submission.id, question_id=question_id, value_json=canonical(value)))
+    session.flush()
+    result = acknowledgement(submission)
+    return result
+
+
+@router.post('/api/public/{public_id}/submissions')
+def submit(public_id: UUID, body: SubmissionInput, request: Request):
     try:
         with request.app.state.sessions.begin() as session:
             # This is also the lock acquired by publish/unpublish: state check and insert
             # have a single serialization point. Successful retries are checked first.
             session.connection().exec_driver_sql('BEGIN IMMEDIATE')
-            existing = session.get(Submission, str(body.submission_id))
-            if existing:
-                if existing.request_json != fingerprint:
-                    raise HTTPException(409, 'This submission ID was already used with different content.')
-                return acknowledgement(existing)
-            publication = session.scalar(select(Publication).where(Publication.public_id == str(public_id)))
-            if publication is None or publication.active_version_id is None:
-                raise HTTPException(409, 'This form is no longer accepting responses.')
-            version = session.get(FormVersion, str(body.version_id))
-            if version is None or version.form_id != publication.form_id:
-                raise HTTPException(422, 'Unknown or unrelated form version.')
-            answers = validate_answers(json.loads(version.snapshot), body.answers)
-            submission = Submission(id=str(body.submission_id), version_id=version.id,
-                                    request_json=fingerprint, created_at=now())
-            session.add(submission)
-            session.flush()
-            for question_id, value in answers.items():
-                session.add(Answer(submission_id=submission.id, question_id=question_id, value_json=canonical(value)))
-            session.flush()
-            result = acknowledgement(submission)
+            result = submit_in_session(session, public_id, body)
         return result
     except SQLAlchemyError as exc:
         raise HTTPException(503, 'Could not store your response. Keep your answers and retry.') from exc

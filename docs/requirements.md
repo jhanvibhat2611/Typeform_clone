@@ -2,7 +2,7 @@
 
 Source: https://docs.google.com/document/d/1IAoeus50jWRmC87cwTcee-xeE5Ml59y2Pfei78HEnaA/edit
 
-Stage 5 respondent fidelity/navigation is implemented for review. Checked items are implemented, not a claim that the
+Repeatable demo seeding is implemented for review after the Stage 5 checkpoint. Checked items are implemented, not a claim that the
 full assignment is complete. Further stages require authorization.
 
 ## Completed through Stage 5
@@ -23,7 +23,7 @@ full assignment is complete. Further stages require authorization.
 - [x] Preview cannot create submissions; unsaved-change warning retained.
 - [x] README, schema/API/architecture notes, tests and verification record.
 - [x] References, recordings, databases, secrets and generated outputs excluded from Git.
-- [x] Public GitHub repository exists with reviewed Stage 1, Stage 2 and Stage 3 checkpoints.
+- [x] Public GitHub repository exists with reviewed Stage 1 through Stage 5 checkpoints.
 
 - [x] Immutable complete snapshots, separate publication state and stable public UUID/link.
 - [x] Atomic publish of current editor contents; unpublish/republish at the same link.
@@ -53,7 +53,7 @@ full assignment is complete. Further stages require authorization.
 
 ## Required later stages — await authorization
 
-- [ ] Seed at least two published mixed-type forms with existing responses idempotently.
+- [ ] Run reviewed seed command against the deployed mounted database (manual, not performed).
 - [ ] Final README coverage and completed visual/interaction comparison.
 - [ ] Publish reviewed remaining stages to the repository only when requested.
 - [ ] Hosted application with SQLite persistence proven across restarts AND redeploys.

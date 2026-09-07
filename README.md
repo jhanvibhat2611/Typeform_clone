@@ -4,10 +4,15 @@ A Next.js/TypeScript builder with FastAPI, SQLAlchemy and SQLite. Build eight qu
 types, save incomplete drafts, publish an immutable version, share a stable public link,
 and collect validated, persisted responses through a one-question-at-a-time public flow.
 
-Stage 4 adds a creator workspace and version-specific results. AI, bonuses, repeatable
-sample seeding and deployment remain out of scope. Stage 4 is committed; Stage 5 respondent UI changes are awaiting review. Existing drafts and
-Git history are preserved. See [roadmap](docs/requirements.md), [architecture](docs/architecture.md),
-[API contracts](docs/api.md) and [verification](docs/stage-4-verification.md).
+Stage 5 is committed. Explicit, repeatable demo seeding is now implemented for review.
+Existing drafts and Git history are preserved. See [roadmap](docs/requirements.md),
+[architecture](docs/architecture.md), [API contracts](docs/api.md),
+[respondent verification](docs/stage-5-verification.md) and [seed verification](docs/seeding-verification.md).
+
+Deployment URLs supplied for this project (not deployed or modified by this stage):
+
+- Frontend: https://typeform-clone-rosy.vercel.app
+- Backend: https://typeformclone-production.up.railway.app
 
 ## Stack
 
@@ -193,3 +198,115 @@ TEST_UI and TEST_ARTIFACTS override those defaults. The check routes browser API
 the disposable backend, creates fresh test forms/responses there, and intentionally fails
 one network request. Never point TEST_API at a database containing user data. This optional
 tool is not a runtime application dependency; normal setup/test commands are unchanged.
+
+
+## Explicit demo data
+
+`python -m app.seed` creates two published samples with five fictional responses each:
+
+| Form | Question types |
+| --- | --- |
+| Event Registration | Short text, email, dropdown, number, yes/no, long text |
+| Product Feedback | Rating, multiple choice, yes/no, number, long text, email |
+
+Questions include help text, required and optional answers, and meaningful single-select
+choices. Fixtures include numeric0, No, and omitted optional answers, with example.com
+emails only. They are fictional demo records, not collected user responses. Results use
+real relational answers and immutable snapshots; no dashboard numbers are fabricated.
+
+Run locally from the repository root in PowerShell:
+
+```powershell
+cd backend
+$env:SQLITE_PATH = 'data/typeform.sqlite3'
+.\.venv\Scripts\python.exe -m app.seed
+```
+
+This targets the LOCAL database. To inspect a separate local demo database, set SQLITE_PATH
+to another local filename before running. Linux/macOS, from backend/ with dependencies active:
+
+```sh
+SQLITE_PATH=data/typeform.sqlite3 python -m app.seed
+```
+
+The command prints the resolved database path, form IDs, public IDs and created/skipped-existing
+status. Public URLs are the frontend origin plus `/f/{public_id}`; builder URLs use `/?form={form_id}`.
+First run creates two forms, two published versions, ten submissions and55 answer rows.
+Submissions get timestamps when first seeded; subsequent runs preserve all timestamps.
+
+A fixed UUID namespace and semantic keys identify forms/questions/options/versions/responses;
+changing a title never changes seed identity. An existing seed form is skipped entirely,
+including edited drafts, republished snapshots, extra responses and unpublished state.
+Missing responses are not replenished in existing forms. Forms with identical titles but
+other IDs are unrelated and untouched. If a seed form is deliberately deleted, a later
+explicit seed run recreates it; no tombstone is stored. Never change the namespace/version
+keys to update existing fixtures, since that would create a different set of forms.
+
+Existing migration code prepares fresh databases; no new migration or dependency was added.
+One BEGIN IMMEDIATE transaction covers identity checks and all newly seeded records. Errors
+roll back both new forms and their responses. Concurrent writers use the same SQLite lock.
+The command reuses normal draft/publication/submission validation and persistence services.
+There is no seed/reset endpoint and no startup/request hook.
+
+## Seed the mounted Railway database (manual, after review)
+
+These are instructions only. This stage did not commit, push, deploy or access the hosted
+database. First deploy the reviewed backend code through your normal release process so
+`app/seed.py` exists in the running service. A Vercel frontend deployment alone does not
+install this backend command. No deployment command is executed here.
+
+Confirm in Railway that the BACKEND service uses SQLITE_PATH=/data/typeform.sqlite3 and
+has its persistent volume mounted at /data. Use the running backend service and correct
+environment; a build/pre-deploy container is not the target mounted runtime.
+
+On your LOCAL computer with the Railway CLI installed:
+
+```sh
+railway login
+```
+
+Use the normal browser sign-in. In the Railway dashboard, select the backend service and
+use **Copy SSH Command**. Run that exact command locally; it selects the real project,
+service and environment IDs. Its form is:
+
+```sh
+railway ssh --project <PROJECT_ID> --service <BACKEND_SERVICE_ID> --environment <ENVIRONMENT_ID>
+```
+
+The resulting shell is INSIDE the running Railway container. From there, locate the
+backend working directory containing `app/seed.py` (commonly /app if Railway's root is
+backend/, or /app/backend if the repository root was deployed):
+
+```sh
+pwd
+ls
+```
+
+Change to that directory if necessary, then confirm the module is deployed and importable:
+
+```sh
+python -c "import app.seed; print(app.seed.__file__)"
+```
+
+Use the same Python interpreter as the running FastAPI service. If that service uses an
+explicit virtualenv interpreter, substitute that path for `python` in the commands below.
+If the module is missing, stop: the seed code has not been deployed to this service.
+
+Run the following INSIDE Railway. The guard refuses to create a replacement database if
+/data is not mounted or the expected existing database is absent:
+
+```sh
+python -c "import os; assert os.path.ismount('/data'), '/data is not mounted'; assert os.path.isfile('/data/typeform.sqlite3'), 'Expected database missing'" && SQLITE_PATH=/data/typeform.sqlite3 python -m app.seed
+```
+
+Run the same command again to confirm both records report `skipped-existing`. Then refresh
+https://typeform-clone-rosy.vercel.app and check both sample cards show Published and5 responses
+on their initial seed. If they were already edited/unpublished, the command preserves that
+state instead. Results are read from the mounted backend database at
+https://typeformclone-production.up.railway.app, not from the frontend filesystem.
+
+`railway run` and `railway shell` run locally with Railway environment variables; they do
+NOT attach the remote volume. Setting SQLITE_PATH=/data/typeform.sqlite3 on your laptop
+cannot seed Railway's database. Use the SSH session above for remote execution.
+See Railway's [SSH documentation](https://docs.railway.com/cli/ssh) and
+[CLI local-development distinction](https://docs.railway.com/cli).

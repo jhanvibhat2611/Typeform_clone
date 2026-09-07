@@ -182,3 +182,24 @@ with a350ms repeated-click guard. Answer state lives above both panels, keyed by
 ID. Validation runs before advancing. Only the explicit OK/Submit/retry action or applicable
 text Enter shortcut can submit; navigation arrows never submit or retry. Existing UUID,
 inFlight guard, snapshot ownership and submission transaction rules remain unchanged.
+
+
+## Explicit repeatable demo seeding
+
+app.seed is a command module, never a startup hook or API route. UUIDv5 identities use a
+fixed namespace plus semantic fixture keys. Existing Form IDs are skipped entirely; titles
+are not identifiers. This preserves all user edits, unpublication, extra responses and
+history. Deleted seed forms can be recreated only by a subsequent explicit command.
+
+publish_in_session and submit_in_session in publication.py are shared by HTTP handlers
+and the seed command. HTTP handlers retain their BEGIN IMMEDIATE transaction and error
+mapping. Seeding acquires one BEGIN IMMEDIATE lock for both fixtures and all responses;
+an error rolls back all new records. The service functions retain snapshot completeness,
+ownership, allowed-answer validation, fingerprinting and answer normalization. A seed
+may supply an internal deterministic version ID; that is not an added API field. All
+relational definitions, published snapshots, public links and answers are persisted through
+SQLAlchemy. No dependency, table or schema-version change was needed. The CLI runs the
+existing migrations, then writes only missing seed identities. Initial timestamps are
+actual seed time and are never rewritten on repeat. Results remain ordinary versioned
+results queries. Railway execution must occur inside the deployed backend container to
+reach its /data volume; local environment injection alone cannot access remote files.
