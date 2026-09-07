@@ -206,3 +206,46 @@ short question fits without scrolling, long wording/descriptions remain vertical
 there is no horizontal overflow, and an answer can be entered at the end. Inspected both
 .artifacts/preview-internal-short.png and preview-internal-long.png. All write requests were
 blocked during these checks; no saved forms or hosted records were changed.
+
+## Creator typography and compact rows: final verification
+
+Before this change, DevTools showed ArialMT on dashboard/results, Arial-BoldMT for form
+titles (CSS 600), and Open Sans only in the builder. Original Typeform still redirected to
+login; its rendered family/weights remain unavailable. The licensed, self-hosted Open Sans
+variable font now consistently serves dashboard, builder and results under the Creator Open
+Sans CSS alias. The file supports 300–800; sampled regular/medium text renders the actual
+OpenSansRoman and OpenSansRoman-Medium faces, not a fallback or synthetic bold. Public forms
+and preview content retain their existing Arial styling.
+
+At 1280x600 CSS pixels / DPR 1.5, with visualViewport.scale=1:
+
+| Sample | CSS size / weight | Line height | Letter spacing | Rendered image size |
+| --- | --- | --- | --- | --- |
+| Primary navigation | 14 px / 500 | 17.33 px | -0.21 px | 21 px |
+| Workspace heading | 24 px / 400 | 28.8 px | -0.6 px | 36 px |
+| Form title | 13.33 px / 500 | 18 px | -0.133 px | 20 px |
+
+Primary labels share one baseline, with a reserved second row for Coming Soon captions.
+Desktop dashboard actions stay on the compact form row; narrow screens retain wrapping.
+Creator controls inherit the creator family and letter spacing. Original font matching is
+approximate; no quota banners, unsupported analytics or additional functionality were added.
+
+The interrupted alignment test initially exposed a specificity conflict. Its scoped CSS
+correction was retained; after rebuilding/restarting the local frontend, the final read-only
+suite passed on dashboard, builder and results at 1280x600/DPR 1.5, 1920x900/DPR 1 and
+390x844/DPR 1. Actual platform font checks, navigation baseline assertions, compact-row checks
+and page-overflow checks passed. Desktop and narrow results captures were visually inspected.
+All nine frontend tests, typecheck, production build and whitespace checks passed against
+the final CSS. Test captures are ignored under .artifacts/creator-*.png.
+
+Repeat without writing records (use an existing form with responses):
+
+```powershell
+$env:PLAYWRIGHT_MODULE = '<absolute path to the installed playwright package>'
+$env:TEST_FORM_ID = '<existing form ID>'
+node frontend/tests/browser/creator-typography.cjs
+```
+
+The suite blocks every non-GET/HEAD request. No hosted data was changed. The final review ZIP
+includes source, tests, documentation, manifests, lockfiles and the font with its OFL license;
+runtime databases, environment secrets, dependencies, screenshots and build output are excluded.

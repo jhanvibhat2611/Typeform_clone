@@ -1,5 +1,5 @@
 @font-face {
-  font-family: "Builder Open Sans";
+  font-family: "Creator Open Sans";
   src: url("/fonts/OpenSans-variable.ttf") format("truetype");
   font-style: normal;
   font-weight: 300 800;
@@ -28,7 +28,7 @@ input, textarea, select { min-width: 0; }
 .icon-button { padding: 5px; border: 0; border-radius: 5px; background: transparent; flex-shrink: 0; }
 .text-button { background: transparent; border: 0; padding: 10px 6px; color: var(--muted); justify-content: flex-start; }
 .builder-shell { --builder-unit: 1px; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-.builder-shell { font-family: "Builder Open Sans", Arial, Helvetica, sans-serif; font-weight: 400; font-synthesis: none; }
+.builder-shell { font-family: "Creator Open Sans", Arial, Helvetica, sans-serif; font-weight: 400; font-synthesis: none; }
 .builder-shell h2, .builder-shell h3, .builder-shell .primary,
 .builder-navigation > [aria-current="page"] { font-weight: 500; }
 .builder-shell .question-row-prompt, .builder-shell .builder-navigation { font-weight: 400; }
@@ -524,3 +524,63 @@ a { color: inherit; }
 .builder-navigation a { text-decoration: none; padding: 6px; }
 
 .respondent-body[data-panel="outgoing"] .respondent-welcome { animation: none; }
+
+/* Creator typography is independent of public forms and their preview renderer. */
+.builder-shell, .creator-page {
+  --creator-unit: 1px;
+  font-family: "Creator Open Sans", Arial, Helvetica, sans-serif;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: -0.01em;
+}
+.creator-page :is(button, input, select, textarea), .builder-shell :is(button, input, select, textarea) { font-family: inherit; letter-spacing: inherit; }
+.builder-shell .preview-paper { letter-spacing: normal; }
+.creator-page h2, .creator-page h3, .creator-page .primary { font-weight: 500; }
+.builder-navigation, .creator-header nav, .creator-tabs { align-items: flex-start; gap: calc(14 * var(--creator-unit)); }
+.builder-shell .builder-navigation > *, .creator-page .creator-header nav > *, .creator-page .creator-tabs > * {
+  display: grid;
+  grid-template-rows: calc(26 * var(--creator-unit)) calc(14 * var(--creator-unit));
+  align-content: center;
+  justify-items: center;
+  gap: calc(3 * var(--creator-unit));
+  padding: calc(8 * var(--creator-unit));
+  margin: 0;
+  font-size: calc(21 * var(--creator-unit));
+  line-height: calc(26 * var(--creator-unit));
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+.creator-header nav [aria-current] { margin: 0; padding: calc(8 * var(--creator-unit)); }
+.builder-navigation small, .creator-header nav small, .creator-tabs small {
+  grid-row: 2; font-size: calc(11 * var(--creator-unit)); line-height: calc(14 * var(--creator-unit)); font-weight: 400; letter-spacing: normal;
+}
+.creator-page .workspace-heading h1, .creator-page .results-heading h1 {
+  font-size: calc(36 * var(--creator-unit)); line-height: 1.2; font-weight: 400; letter-spacing: -0.025em;
+}
+.creator-page .form-card-main h2 { font-size: calc(20 * var(--creator-unit)); line-height: 1.35; font-weight: 500; letter-spacing: -0.01em; }
+.creator-page .summary-card h2 { font-weight: 500; }
+@media (min-width: 851px) {
+  .builder-shell, .creator-page { --creator-unit: clamp(0.666667px, calc(100vw / 1920), 1px); }
+  .creator-page .creator-header { min-height: calc(90 * var(--creator-unit)); }
+  .creator-page .creator-tabs { min-height: calc(76 * var(--creator-unit)); }
+  .creator-page .workspace-content { padding: calc(36 * var(--creator-unit)); }
+  .creator-page .workspace-heading { padding-bottom: calc(24 * var(--creator-unit)); margin-bottom: calc(22 * var(--creator-unit)); }
+  .creator-page .forms-grid { gap: calc(12 * var(--creator-unit)); }
+  .creator-page .form-card, .creator-page .forms-list-heading { grid-template-columns: minmax(0,1fr) calc(220 * var(--creator-unit)) calc(240 * var(--creator-unit)); gap: calc(18 * var(--creator-unit)); }
+  .creator-page .forms-list-heading { padding: calc(14 * var(--creator-unit)); font-size: calc(16 * var(--creator-unit)); }
+  .creator-page .forms-list-heading > span:last-child { display: block; }
+  .creator-page .form-card { min-height: calc(72 * var(--creator-unit)); padding: calc(8 * var(--creator-unit)) calc(14 * var(--creator-unit)); border-radius: calc(14 * var(--creator-unit)); }
+  .creator-page .form-card-main { min-height: calc(48 * var(--creator-unit)); gap: calc(14 * var(--creator-unit)); }
+  .creator-page .form-card-main > svg { width: calc(48 * var(--creator-unit)); height: calc(48 * var(--creator-unit)); }
+  .creator-page .form-card-actions { grid-column: auto; gap: calc(8 * var(--creator-unit)); }
+  .creator-page .form-card-meta { font-size: calc(15 * var(--creator-unit)); gap: calc(10 * var(--creator-unit)); flex-wrap: wrap; }
+  .creator-page .form-card-actions a { font-size: calc(15 * var(--creator-unit)); }
+}
+@media (max-width: 850px) {
+  .builder-shell .builder-navigation > *, .creator-page .creator-header nav > *, .creator-page .creator-tabs > * { font-size: 14px; grid-template-rows: 20px 12px; line-height: 20px; padding: 6px; }
+  .builder-navigation small, .creator-header nav small, .creator-tabs small { font-size: 9px; line-height: 12px; }
+  .creator-page .workspace-heading h1, .creator-page .results-heading h1 { font-size: 26px; }
+  .creator-page .form-card-main h2 { font-size: 16px; }
+  .builder-navigation, .creator-header nav, .creator-tabs { flex-wrap: wrap; gap: 6px; }
+}

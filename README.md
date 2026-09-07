@@ -151,7 +151,8 @@ answers. [Architecture](docs/architecture.md) explains keys/migration/transactio
 - Answers/attempts live in tab memory until submission; reload does not resume an attempt.
   Unsaved/unsubmitted content has an unload warning. No partial-response storage exists.
 - Default shared creator, no private isolation; multiple editor tabs are last-save-wins.
-- Visual fidelity is approximate, not pixel-perfect. System sans approximates the reference
+- Visual fidelity is approximate, not pixel-perfect. Creator screens use self-hosted, SIL-OFL-licensed
+  Open Sans at regular/medium weights; public forms retain Arial. These approximate the reference
   font; builder/results text and spacing are denser. The latest pass uses a loaded-dashboard reference; individual-response detail and native
   mobile references are still missing, and exact original animation timing is unverified.
   See the [final visual comparison](docs/final-audit.md#visual-comparison).
