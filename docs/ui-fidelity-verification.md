@@ -192,3 +192,17 @@ and weight rules are unchanged. Only builder layout rules changed; public respon
 dropdown implementation, motion, thank-you screen, backend and stored records are untouched.
 Narrow layouts retain responsive preview width and the existing larger text/card treatment.
 Preview text wraps within its narrower paper; no additional cosmetic changes were made.
+
+## Preview internal sizing follow-up
+
+Scoped typography and spacing to .preview-paper using the existing builder size unit.
+At the 1920x900 screenshot configuration (1280x600 CSS / DPR 1.5), measured question,
+description and answer text at approximately 19, 13.5 and 17 image pixels. The frame,
+font families, public respondent and application logic are unchanged. Preview choice
+controls use the same internal spacing scale; focus indicators remain visible.
+
+Typecheck and production build passed. Browser-only short/long fixtures verified that a
+short question fits without scrolling, long wording/descriptions remain vertically scrollable,
+there is no horizontal overflow, and an answer can be entered at the end. Inspected both
+.artifacts/preview-internal-short.png and preview-internal-long.png. All write requests were
+blocked during these checks; no saved forms or hosted records were changed.

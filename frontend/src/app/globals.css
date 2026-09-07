@@ -34,6 +34,14 @@ input, textarea, select { min-width: 0; }
 .builder-shell .question-row-prompt, .builder-shell .builder-navigation { font-weight: 400; }
 /* The preview retains the public form's font, independently of editor chrome. */
 .builder-shell .preview-paper { font-family: Arial, Helvetica, sans-serif; }
+.builder-shell .preview-paper { padding: calc(24 * var(--builder-unit)) calc(20 * var(--builder-unit)); }
+.preview-paper .question-number { font-size: calc(11 * var(--builder-unit)); margin-bottom: calc(10 * var(--builder-unit)); }
+.preview-paper .preview-prompt { font-size: calc(19 * var(--builder-unit)); }
+.preview-paper .preview-description { font-size: calc(13.5 * var(--builder-unit)); margin-top: calc(9 * var(--builder-unit)); }
+.preview-paper .preview-answer { font-size: calc(17 * var(--builder-unit)); margin-top: calc(23 * var(--builder-unit)); padding-block: calc(8 * var(--builder-unit)); }
+.preview-paper .choice-control, .preview-paper .rating-control { margin-top: calc(22 * var(--builder-unit)); }
+.preview-paper .choice-answer { font-size: calc(15 * var(--builder-unit)); padding: calc(9 * var(--builder-unit)); }
+.preview-paper .rating-control .choice-answer { font-size: calc(11 * var(--builder-unit)); padding: calc(8 * var(--builder-unit)) calc(2 * var(--builder-unit)); }
 .app-header { height: 58px; flex-shrink: 0; padding: 10px 20px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; }
 .breadcrumbs { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .breadcrumbs > svg { flex-shrink: 0; }
