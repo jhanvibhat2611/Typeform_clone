@@ -162,3 +162,23 @@ performance or views controls were added.
 
 Multiple creator tabs still use last-successful-save-wins. Repeatable sample seeding and
 final deployment remain for the next stage; no commit/push/deploy occurred in this stage.
+
+
+## Stage 5 respondent presentation
+
+Only Respondent.tsx and public-scoped CSS alter application behavior. The shared
+QuestionControl component and all backend contracts are unchanged. Index -1 represents
+the welcome screen, which renders the published snapshot title and neutral introductory
+text. It is never part of the question array, validation or answer map. Start/Enter moves
+to index0. No settings, API fields or database migrations were added.
+
+moveTo holds a synchronous ref lock, then mounts the outgoing and incoming viewport
+panels in the same render. Both translate together over600ms with identical easing;
+Forward moves up and Back down. The outgoing panel is inert and aria-hidden with distinct
+control IDs, and preserves its previous internal scroll offset. Each active panel starts
+at its own scroll origin; no scrollIntoView is used. Focus waits until movement ends and
+uses preventScroll. Unmount cancels both animations. Reduced motion replaces movement
+with a350ms repeated-click guard. Answer state lives above both panels, keyed by question
+ID. Validation runs before advancing. Only the explicit OK/Submit/retry action or applicable
+text Enter shortcut can submit; navigation arrows never submit or retry. Existing UUID,
+inFlight guard, snapshot ownership and submission transaction rules remain unchanged.

@@ -2,10 +2,10 @@
 
 Source: https://docs.google.com/document/d/1IAoeus50jWRmC87cwTcee-xeE5Ml59y2Pfei78HEnaA/edit
 
-Stage 4 is implemented for review. Checked items are implemented, not a claim that the
+Stage 5 respondent fidelity/navigation is implemented for review. Checked items are implemented, not a claim that the
 full assignment is complete. Further stages require authorization.
 
-## Completed through Stage 4
+## Completed through Stage 5
 
 - [x] Next.js/TypeScript frontend and modular FastAPI/SQLAlchemy/SQLite backend.
 - [x] Create a draft, edit its title, explicit Save with unsaved/saving/saved/error states.
@@ -45,6 +45,11 @@ full assignment is complete. Further stages require authorization.
 - [x] Existing inline title editing, workspace modals/toasts and accessible Coming Soon theme/thank-you placeholders.
 - [x] Version4 migration preserves all existing draft/publication/response data.
 - [x] No invented views/completion rates; responsive table and summary layouts.
+
+- [x] Reference-aligned public respondent layout and directional vertical transitions.
+- [x] Simultaneous directional panels, inert outgoing content, navigation repeat guard and reduced motion.
+- [x] Simple published-title welcome screen; navigation arrows never submit.
+- [x] Stage 5 browser verification across eight controls, retry and builder preview.
 
 ## Required later stages — await authorization
 

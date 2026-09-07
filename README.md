@@ -1,11 +1,11 @@
-# Typeform-inspired builder — Stage 4
+# Typeform-inspired builder — Stage 5
 
 A Next.js/TypeScript builder with FastAPI, SQLAlchemy and SQLite. Build eight question
 types, save incomplete drafts, publish an immutable version, share a stable public link,
 and collect validated, persisted responses through a one-question-at-a-time public flow.
 
 Stage 4 adds a creator workspace and version-specific results. AI, bonuses, repeatable
-sample seeding and deployment remain out of scope. No Stage 4 commit/push has been made. Existing drafts and
+sample seeding and deployment remain out of scope. Stage 4 is committed; Stage 5 respondent UI changes are awaiting review. Existing drafts and
 Git history are preserved. See [roadmap](docs/requirements.md), [architecture](docs/architecture.md),
 [API contracts](docs/api.md) and [verification](docs/stage-4-verification.md).
 
@@ -161,3 +161,35 @@ Backend tests use temporary SQLite databases, including migration fixtures, work
 rollback and two real Uvicorn process runs. [Stage 4 verification](docs/stage-4-verification.md)
 distinguishes performed browser checks from remaining limitations. Stage1/2/3 verification
 documents are historical records; later stages deliberately change their scope.
+
+
+## Stage 5 respondent navigation
+
+Public forms have a wide question area, numbered heading badge, underline answer controls,
+compact OK button, top progress line and fixed lower-right Up/Down buttons. Forward exits
+upward and enters from below; Back reverses this. Both panels move together for 600 ms; navigation locks for that entire
+transition. Reduced motion removes movement and retains a 350 ms repeat-click guard.
+Answers remain in the respondent's question-ID map, independently of the displayed panel.
+No schema, API, publication or persistence changes were made.
+
+Enter advances short text, email and number after validation. Long text keeps Enter for
+newlines and uses Ctrl+Enter to advance. Native input/select/radio arrows keep their normal
+behavior. Outside those controls, Up/Down navigates without submitting; the final Down arrow is disabled. Tab reaches the navigation buttons,
+which also support Enter/Space. Holding a key does not repeatedly advance. Focus returns
+to the new answer, and invalid answers keep focus on their field. The focused underline
+thickens; forced-colour mode uses a visible outline. Submission retries retain their original
+payload and UUID. Preview controls retain their previous styling and never submit.
+
+See [Stage 5 verification](docs/stage-5-verification.md) for references, browser checks and
+remaining differences. A simple snapshot-title welcome screen now precedes question one; Start or Enter begins.
+No configurable welcome-screen editor, seeding or deployment was added.
+
+Optional browser integration check: `frontend/tests/browser/respondent.cjs` requires an
+existing Playwright installation and Microsoft Edge (or TEST_BROWSER channel). Start a
+separate backend with SQLITE_PATH pointing at a disposable database and port8001, and a
+frontend on port3001. From the repository root, set PLAYWRIGHT_MODULE to the installed
+Playwright package path and run `node frontend/tests/browser/respondent.cjs`. TEST_API,
+TEST_UI and TEST_ARTIFACTS override those defaults. The check routes browser API calls to
+the disposable backend, creates fresh test forms/responses there, and intentionally fails
+one network request. Never point TEST_API at a database containing user data. This optional
+tool is not a runtime application dependency; normal setup/test commands are unchanged.

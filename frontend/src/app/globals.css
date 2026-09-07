@@ -172,7 +172,7 @@ h2 { font-size: 14px; font-weight: 600; margin: 0; }
 .respondent-progress::-webkit-progress-value { background: var(--plum); transition: width .25s; }
 .respondent-progress::-moz-progress-bar { background: var(--plum); }
 .respondent-body { flex: 1; display: flex; padding: 50px 24px; }
-.respondent-question { width: min(100%, 660px); margin: auto; animation: question-enter .25s ease-out; }
+.respondent-question { width: min(100%, 660px); margin: auto; position: relative; }
 .respondent-question h1 { font-size: 30px; font-weight: normal; margin: 0; }
 .respondent-question .preview-description { font-size: 18px; }
 .respondent-question .preview-answer { font-size: 26px; margin-top: 30px; }
@@ -187,7 +187,7 @@ h2 { font-size: 14px; font-weight: 600; margin: 0; }
 .respondent-error { color: #9e273d; background: #fbe9ee; padding: 10px 12px; border-radius: 5px; line-height: 1.5; }
 .respondent-state { min-height: 100dvh; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #fafafa; }
 .respondent-state h1 { font-size: 30px; line-height: 1.4; font-weight: normal; }
-@keyframes question-enter { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
 @media (max-width: 1200px) { .app-header { height: auto; min-height: 58px; } .header-actions { gap: 6px; } .header-actions .save-status { flex-basis: 100%; justify-content: flex-end; } }
 @media (max-width: 850px) { .header-actions .save-status { flex-basis: 100%; justify-content: flex-start; } }
 @media (max-width: 600px) {
@@ -286,3 +286,58 @@ a { color: inherit; }
 .distribution meter::-webkit-meter-bar { background: #eeebf0; border: 0; border-radius: 5px; }
 .distribution meter::-webkit-meter-optimum-value { background: var(--plum); }
 .distribution meter::-moz-meter-bar { background: var(--plum); }
+
+/* Stage 5: public-only overrides keep the builder's shared controls unchanged. */
+.respondent-shell { color: #2b252d; overflow-x: clip; }
+.respondent-progress { position: fixed; top: 8px; left: 9px; width: calc(100% - 18px); height: 4px; z-index: 2; border-radius: 4px; overflow: hidden; background: #aaa7aa; }
+.respondent-progress::-webkit-progress-bar { background: #aaa7aa; }
+.respondent-progress::-webkit-progress-value { background: #2b252d; }
+.respondent-body { min-height: 100dvh; padding: 152px 60px 110px; }
+.respondent-question { width: min(100%, 1080px); }
+.respondent-number { position: absolute; right: calc(100% + 16px); top: 10px; min-width: 24px; height: 28px; border-radius: 5px; background: #2b252d; color: white; font-size: 18px; font-weight: 600; text-align: center; padding: 2px 5px; }
+.respondent-question h1 { font-size: 40px; line-height: 1.25; }
+.respondent-question .preview-description { font-size: 24px; line-height: 1.4; margin: 22px 0 0; }
+.respondent-question .preview-answer { font-size: 40px; margin-top: 64px; padding: 12px 0 14px; border: 0; border-bottom: 2px solid #2b252d; border-radius: 0; background: transparent; box-shadow: none; color: inherit; }
+.respondent-question .preview-answer::placeholder { color: #bdbabd; opacity: 1; }
+.respondent-question .preview-answer:focus { box-shadow: none; }
+.respondent-question .preview-answer:focus-visible { outline: 2px solid transparent; outline-offset: 6px; border-bottom-color: #6b586f; box-shadow: 0 3px 0 #6b586f; }
+@media (forced-colors: active) { .respondent-question .preview-answer:focus-visible { outline-color: Highlight; } }
+.respondent-question .long-answer { font-size: 28px; }
+.respondent-question .choice-control, .respondent-question .rating-control { margin-top: 36px; }
+.respondent-question .choice-answer { background: #eeedee; border-color: #dfdcdf; }
+.respondent-question .choice-answer.checked { background: transparent; border-color: #2b252d; }
+.respondent-actions { margin-top: 44px; }
+.respondent-actions .advance { min-width: 88px; min-height: 60px; font-size: 28px; padding: 10px 24px; border-radius: 11px; background: #2b252d; }
+.respondent-question .keyboard-hint { margin: 12px 0 0; font-size: 13px; }
+.respondent-navigation { position: fixed; bottom: max(44px, env(safe-area-inset-bottom)); right: max(28px, env(safe-area-inset-right)); display: flex; gap: 3px; z-index: 3; padding: 4px; background: #fafafaeF; border-radius: 12px; }
+.respondent-navigation button { min-height: 48px; width: 48px; padding: 8px; background: #2b252d; border-radius: 0 10px 10px 0; }
+.respondent-navigation button:first-of-type { border-radius: 10px 0 0 10px; }
+.respondent-navigation button:disabled { opacity: 1; background: #cbc8cb; color: #99959a; }
+@media (max-width: 600px) {
+  .respondent-body { padding: 70px 24px 110px 48px; }
+  .respondent-number { min-width: 20px; height: 24px; right: calc(100% + 10px); top: 3px; font-size: 15px; }
+  .respondent-question h1 { font-size: 26px; }
+  .respondent-question .preview-description { font-size: 18px; }
+  .respondent-question .preview-answer { font-size: 26px; margin-top: 30px; }
+  .respondent-question .long-answer { font-size: 22px; }
+  .respondent-actions { margin-top: 28px; }
+  .respondent-actions .advance { flex: none; min-height: 48px; min-width: 72px; font-size: 21px; padding: 8px 18px; }
+  .respondent-navigation { right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); }
+  .respondent-question .rating-control { flex-wrap: wrap; }
+}
+
+/* A fixed viewport holds both panels during the same transition. Long panels scroll internally. */
+.respondent-shell { height: 100dvh; min-height: 0; overflow: hidden; }
+.respondent-viewport { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+.respondent-viewport > .respondent-body { position: absolute; inset: 0; height: 100%; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; background: #fafafa; }
+.respondent-body[data-panel="outgoing"] { pointer-events: none; }
+.respondent-welcome { width: min(100%, 1080px); margin: auto; text-align: center; }
+.respondent-welcome h1 { margin: 0; font-size: 48px; line-height: 1.25; font-weight: 400; overflow-wrap: anywhere; }
+.respondent-welcome p { margin: 16px 0 48px; font-size: 28px; line-height: 1.3; color: #5d575e; }
+.respondent-welcome button { min-height: 60px; padding: 10px 24px; font-size: 28px; border-radius: 11px; background: #2b252d; }
+.respondent-viewport > .welcome-body { padding: 40px 24px 80px; }
+@media (max-width: 600px) {
+  .respondent-welcome h1 { font-size: 32px; }
+  .respondent-welcome p { font-size: 20px; margin-bottom: 32px; }
+  .respondent-welcome button { min-height: 48px; font-size: 22px; }
+}
