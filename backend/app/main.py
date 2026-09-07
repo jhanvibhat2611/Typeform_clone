@@ -27,7 +27,7 @@ def create_app(path: Path | None = None) -> FastAPI:
         finally:
             engine.dispose()
 
-    app = FastAPI(title="Typeform assignment — Stage 4", lifespan=lifespan)
+    app = FastAPI(title="Typeform Builder API", lifespan=lifespan)
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(_request, exc):
