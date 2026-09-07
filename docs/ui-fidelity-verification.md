@@ -154,3 +154,25 @@ passed. A sandboxed browser retry timed out; the same read-only check passed out
 network sandbox. Desktop screenshots were inspected, including the reproduced DPR-1.5 case.
 No forms were
 republished or seeded; styling requires only a frontend deployment.
+
+## Builder typography-only follow-up
+
+The original builder was not accessible: admin.typeform.com redirected to login. Its rendered
+font family and weight therefore remain unverified; no identification was made from screenshots.
+DevTools CSS.getPlatformFontsForNode confirmed our former navigation/cards used ArialMT at 400,
+and Pages/Endings resolved CSS weight 600 to Arial-BoldMT. Helvetica and generic sans-serif were
+declared fallbacks, not the fonts used for those sampled labels.
+
+Builder chrome now self-hosts the unmodified Open Sans variable font as an approximate alternative,
+with regular 400 labels/cards/controls and true medium 500 headings/actions. DevTools confirmed
+OpenSansRoman-Medium was actually rendered for Pages, with no Arial Bold substitution. The
+SIL OFL 1.1 license and source attribution are included in frontend/public/fonts. Unsupported
+glyphs retain the documented fallback stack; exact glyph coverage beyond sampled English is
+not claimed. No new package dependency or runtime third-party font request is needed.
+
+Only builder font-family/weight rules changed. Preview and public respondent retain Arial;
+respondent dimensions, motion, results and application behavior are untouched. Nine frontend
+tests, typecheck and production build passed. Read-only browser checks verified font loading,
+400/500 weights, inherited control fonts, card containment and no horizontal page overflow at
+1920, 1280 and 390 CSS pixels. Desktop/mobile screenshots were inspected; existing two-line
+question-card truncation remains intentional. Original font matching remains approximate.
