@@ -1,19 +1,19 @@
-# Typeform-inspired builder — Stage 3
+# Typeform-inspired builder — Stage 4
 
 A Next.js/TypeScript builder with FastAPI, SQLAlchemy and SQLite. Build eight question
 types, save incomplete drafts, publish an immutable version, share a stable public link,
 and collect validated, persisted responses through a one-question-at-a-time public flow.
 
-Stage 3 is implemented for review. No results dashboard, workspace management, AI, bonuses
-or deployment are included. No Stage 3 commit/push has been made. Existing drafts and
+Stage 4 adds a creator workspace and version-specific results. AI, bonuses, repeatable
+sample seeding and deployment remain out of scope. No Stage 4 commit/push has been made. Existing drafts and
 Git history are preserved. See [roadmap](docs/requirements.md), [architecture](docs/architecture.md),
-[API contracts](docs/api.md) and [verification](docs/stage-3-verification.md).
+[API contracts](docs/api.md) and [verification](docs/stage-4-verification.md).
 
 ## Stack
 
 Next.js16 / React19 / TypeScript5.9, plain CSS, dnd-kit sorting and Lucide SVG icons.
 Python3.12+, FastAPI, Pydantic, Uvicorn, SQLAlchemy2 and built-in SQLite. Backend unittest/
-HTTPX and Node's built-in test runner. No new Stage 3 dependency or infrastructure.
+HTTPX and Node's built-in test runner. No new Stage 4 dependency or infrastructure.
 Python requirements are pinned; frontend resolution is in package-lock.json.
 Use Node.js22.18+ or24 LTS for the frontend tests.
 
@@ -41,8 +41,13 @@ Open http://127.0.0.1:3000; API docs: http://127.0.0.1:8000/docs. Ctrl+C stops a
 For a production frontend locally, run npm.cmd run build, then npm.cmd run start instead
 of dev. Both use port3000. Keep the configured backend running.
 
-New form starts an empty unsaved draft. Save persists it and places its UUID in the URL;
-bookmark that URL because form listing is a later stage. Drag grips reorder questions or
+The root URL opens the forms workspace. Create form persists an empty draft and opens
+its builder. Existing /?form={id} URLs still work. Forms breadcrumbs return to the workspace.
+Cards show saved titles, publication status and actual response counts across all versions.
+Rename changes only the saved draft title; the live snapshot title changes on republish.
+Duplicate copies current saved draft content with fresh IDs, no responses and no publication
+history. Confirmed Delete permanently removes the form, its versions and associated responses
+in one transaction; the public link then stops working. Drag grips reorder questions or
 options; keyboard sorting uses Space, Up/Down, Space (Escape cancels).
 
 Publish validates and saves the CURRENT editor contents in one transaction, creates a
@@ -73,13 +78,31 @@ use python3 -m venv backend/.venv, backend/.venv/bin/python to install/run backe
 and npm instead of npm.cmd. Then run the servers above.
 
 Before upgrading, stop the old backend and retain the SAME SQLITE_PATH. Startup runs the
-original 0 -> 2 migration if needed, then additive 2 -> 3. Existing draft rows/IDs are not
-rewritten in Stage 3. SQLite-safe backups are created beside the database as
-.stage1-backup.sqlite3 and .stage2-backup.sqlite3 when their migrations run, without
+original 0 -> 2 migration if needed, then 2 -> 3 and 3 -> 4. Existing draft rows/IDs are not
+rewritten in Stage 4. SQLite-safe backups are created beside the database as
+.stage1-backup.sqlite3, .stage2-backup.sqlite3 and .stage3-backup.sqlite3 when applicable, without
 replacing an existing backup. New publication IDs are allocated for existing forms.
-Fresh setup runs both migrations; repeat startup is a no-op. Unknown versions fail without
+Fresh setup runs the migration chain; repeat startup is a no-op. Unknown versions fail without
 resetting data. Keep the database directory writable and refresh old frontend tabs.
 There is no automatic downgrade; restoring an older backup discards subsequent data.
+
+## Workspace and results
+
+Per-form Results navigation opens /forms/{form_id}/results. Select a published version
+explicitly in the dropdown; the latest is selected initially. Responses show submission
+time, version and snapshot-based answers. Click a submission time to inspect every
+question, including unanswered optional questions removed from later drafts.
+
+Response summary shows answered/unanswered counts; option, Yes/No and rating distributions;
+text/email answers; and numeric values/minimum/maximum. All summaries are for the selected
+version only. Zero displays as 0, false as No, and omitted optionals as Unanswered (optional).
+No views, completion rates or uncollected analytics are displayed. Wide tables have an
+independent horizontal scrollbar and keyboard-focusable region. The builder has accessible
+Theme and Thank-you screen placeholders labelled Coming Soon; they change no settings.
+
+Results currently load all responses for one selected version; pagination is not implemented.
+This is appropriate for assignment/demo data, not an unbounded production response volume.
+Creator endpoints remain shared-demo APIs without authentication or access isolation.
 
 ## Configuration
 
@@ -134,7 +157,7 @@ npm.cmd run typecheck
 npm.cmd run build
 ```
 
-Backend tests use temporary SQLite databases, including migration fixtures, concurrency,
-rollback and two real Uvicorn process runs. [Stage 3 verification](docs/stage-3-verification.md)
-distinguishes performed browser checks from remaining limitations. Stage1/2 verification
+Backend tests use temporary SQLite databases, including migration fixtures, workspace/results, concurrency,
+rollback and two real Uvicorn process runs. [Stage 4 verification](docs/stage-4-verification.md)
+distinguishes performed browser checks from remaining limitations. Stage1/2/3 verification
 documents are historical records; later stages deliberately change their scope.

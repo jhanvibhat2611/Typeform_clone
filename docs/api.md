@@ -1,4 +1,4 @@
-# API — Stage 3
+# API — Stage 4
 
 Base: http://127.0.0.1:8000. Interactive schemas: /docs. JSON requests/responses.
 Creator endpoints are shared-demo endpoints, without authentication. Public endpoints need
@@ -112,3 +112,45 @@ Completeness/answer errors use detail: {message, fields: {question_id: message}}
 publication errors can use the questions key. Structural errors use detail: [{loc,msg,type}].
 Raw values are not echoed. The respondent keeps answers, focuses known field errors and
 retries the same payload/UUID after an uncertain network or server failure.
+
+
+## Creator workspace and results
+
+| Method | Route | Contract |
+| --- | --- | --- |
+| GET | /api/forms | Saved forms: id, title, status (draft/published), response_count across all versions |
+| POST | /api/forms | {title}; persists an empty draft and returns its draft definition |
+| PATCH | /api/forms/{id} | {title}; updates only the saved draft title; returns id/title |
+| POST | /api/forms/{id}/duplicate | Empty body; returns independent unpublished draft with fresh IDs |
+| DELETE | /api/forms/{id} | Deletes form and all associated records atomically; returns deleted_id |
+| GET | /api/forms/{id}/results | form_id, current title, total response_count, versions |
+| GET | /api/forms/{id}/versions/{version_id}/results | version_id, snapshot, submissions and summaries for that version |
+| GET | /api/forms/{id}/submissions/{submission_id} | id, version_id, created_at, snapshot and answers |
+
+Create/rename titles must be nonblank and at most160 Unicode code points; extra fields are
+rejected. Forms list is ordered by title then ID. Published means the active pointer is set,
+even if newer draft edits are unsaved/unpublished. Rename leaves public snapshot wording
+unchanged. Duplication copies current SAVED draft content, with new form/question/option/
+public IDs and no submissions/versions; it does not copy the active public snapshot instead.
+Create/duplicate POSTs are not deduplicated; if a network response is lost, refresh the list
+before retrying to check whether the new form exists.
+
+Delete is permanent: answers, submissions, publication, versions and draft records are
+removed in one write transaction. The UI requires confirmation; API callers must handle
+that user interaction themselves. Deleted public links become unavailable. Deleted submission
+UUIDs no longer have stored acknowledgements. A missing form is404; storage failures are503
+and roll back; invalid titles are422. Duplicate and rename leave other forms untouched.
+
+Versions are ordered oldest first and assigned display numbers beginning at1, alongside
+stable version UUID and created_at. Each includes response_count. The version endpoint
+requires ownership by the requested form; mismatched/unknown versions and responses are404.
+Submissions are newest first and contain id/version_id/created_at plus an answers map keyed
+by snapshot question ID. Individual responses include every question in snapshot.questions;
+missing answer-map keys represent unanswered optional questions, never false/zero.
+
+Each summary contains question (from snapshot), answered and unanswered. Choice/boolean/
+rating summaries include distribution [{value,label,count}], including zero-count buckets.
+Text/email/number summaries include values; numeric summaries add minimum/maximum (null if
+none). All summaries use only the selected version's submissions. Results expose no views,
+completion rate or analytics requiring events we do not store. Results are currently unpaged
+for assignment-scale data. All creator routes share the documented default-creator limitation.

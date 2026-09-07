@@ -2,10 +2,10 @@
 
 Source: https://docs.google.com/document/d/1IAoeus50jWRmC87cwTcee-xeE5Ml59y2Pfei78HEnaA/edit
 
-Stage 3 is implemented for review. Checked items are implemented, not a claim that the
+Stage 4 is implemented for review. Checked items are implemented, not a claim that the
 full assignment is complete. Further stages require authorization.
 
-## Completed through Stage 3
+## Completed through Stage 4
 
 - [x] Next.js/TypeScript frontend and modular FastAPI/SQLAlchemy/SQLite backend.
 - [x] Create a draft, edit its title, explicit Save with unsaved/saving/saved/error states.
@@ -23,7 +23,7 @@ full assignment is complete. Further stages require authorization.
 - [x] Preview cannot create submissions; unsaved-change warning retained.
 - [x] README, schema/API/architecture notes, tests and verification record.
 - [x] References, recordings, databases, secrets and generated outputs excluded from Git.
-- [x] Public GitHub repository exists with reviewed Stage 1 and Stage 2 checkpoints.
+- [x] Public GitHub repository exists with reviewed Stage 1, Stage 2 and Stage 3 checkpoints.
 
 - [x] Immutable complete snapshots, separate publication state and stable public UUID/link.
 - [x] Atomic publish of current editor contents; unpublish/republish at the same link.
@@ -39,12 +39,15 @@ full assignment is complete. Further stages require authorization.
 - [x] Stage 1/2 migration preservation, restart persistence, rollback and retry tests.
 - [x] Dedicated API documentation and updated setup/architecture.
 
+- [x] Forms dashboard with saved title, draft/published status and actual all-version response counts.
+- [x] Create/rename/independent duplicate/confirmed atomic delete including responses.
+- [x] Explicit version selection, response table, snapshot-based individual responses and summaries.
+- [x] Existing inline title editing, workspace modals/toasts and accessible Coming Soon theme/thank-you placeholders.
+- [x] Version4 migration preserves all existing draft/publication/response data.
+- [x] No invented views/completion rates; responsive table and summary layouts.
+
 ## Required later stages — await authorization
 
-- [ ] Forms list with draft/published status and response counts.
-- [ ] Complete form management: rename, duplicate and delete (builder title editing/create exist).
-- [ ] Responses list, individual responses and per-question summaries.
-- [ ] Remaining Typeform-like inline editing, toasts and theme/thank-you settings placeholders.
 - [ ] Seed at least two published mixed-type forms with existing responses idempotently.
 - [ ] Final README coverage and completed visual/interaction comparison.
 - [ ] Publish reviewed remaining stages to the repository only when requested.

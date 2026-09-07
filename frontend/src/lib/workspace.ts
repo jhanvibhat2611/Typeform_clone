@@ -1,0 +1,22 @@
+import type { Draft, Question } from './drafts';
+import { api } from './publication';
+export type FormRow = {id:string; title:string; status:'draft'|'published'; response_count:number};
+export type Version = {id:string; number:number; created_at:string; response_count:number};
+export type ResultsInfo = {form_id:string; title:string; response_count:number; versions:Version[]};
+export type Values = Record<string, string | number | boolean>;
+export type ResponseRow = {id:string; version_id:string; created_at:string; answers:Values};
+export type Detail = ResponseRow & {snapshot:Draft};
+export type Summary = {question:Question; answered:number; unanswered:number;
+  distribution?:{value:string|number|boolean; label:string; count:number}[];
+  values?:(string|number|boolean)[]; minimum?:number|null; maximum?:number|null};
+export type VersionResults = {version_id:string; snapshot:Draft; submissions:ResponseRow[]; summaries:Summary[]};
+export const forms = () => api<FormRow[]>('/api/forms');
+export const createForm = (title:string) => api<Draft>('/api/forms',{title});
+export const renameForm = (id:string,title:string) => api('/api/forms/'+id,{title},'PATCH');
+export const duplicateForm = (id:string) => api<Draft>('/api/forms/'+id+'/duplicate',{});
+export const deleteForm = (id:string) => api('/api/forms/'+id,undefined,'DELETE');
+export const resultsInfo = (id:string) => api<ResultsInfo>('/api/forms/'+id+'/results');
+export const versionResults = (id:string,version:string) => api<VersionResults>('/api/forms/'+id+'/versions/'+version+'/results');
+export const responseDetail = (id:string,response:string) => api<Detail>('/api/forms/'+id+'/submissions/'+response);
+
+export { answerLabel } from './answers';

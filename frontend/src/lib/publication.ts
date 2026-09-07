@@ -9,11 +9,12 @@ export class ApiError extends Error {
   constructor(message: string, status: number, fields: Record<string, string> = {}) { super(message); this.status = status; this.fields = fields; }
 }
 const origin = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
-export async function api<T>(path: string, body?: unknown): Promise<T> {
+export async function api<T>(path: string, body?: unknown, method?: string): Promise<T> {
   let response: Response;
   try {
     response = await fetch(origin + path, { cache: 'no-store', signal: AbortSignal.timeout(15000),
-      ...(body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }) });
+      ...(body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+      ...(method ? { method } : {}) });
   } catch { throw new ApiError('Cannot reach the server. Your answers or edits are still here. Please retry.', 0); }
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new ApiError(typeof data?.detail === 'string' ? data.detail :

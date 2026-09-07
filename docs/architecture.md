@@ -1,8 +1,8 @@
-# Architecture — Stage 3
+# Architecture — Stage 4
 
 One Next.js/TypeScript frontend calls one modular FastAPI application. SQLAlchemy uses
 SQLite through Python's built-in driver. No additional dependency or service was added
-in Stage 3. Creator access remains a shared demo with no login or private workspace.
+in Stage 4. Creator access remains a shared demo with no login or private workspace.
 
 ## Drafts and publication
 
@@ -27,8 +27,45 @@ Published forms need at least one question, nonblank prompts and, for either cho
 at least two nonblank options. Multiple choice and dropdown are single-select. Rating is
 fixed to integer1–5. Snapshot JSON includes schema_version=1, title/form ID, every common
 question field, stable option IDs/labels, array order plus explicit positions, and frozen
-choice/rating settings. SQLite triggers reject updates/deletes of version rows. This stage
-has no version pruning or form deletion workflow.
+choice/rating settings. SQLite always rejects snapshot updates. Deletion is permitted only after the publication
+record has been removed, as part of confirmed whole-form deletion. Standalone history
+deletion remains blocked, including for unpublished forms.
+
+## Workspace and results
+
+Root / renders Dashboard; /?form={id} keeps the existing Builder. Per-form results live at
+/forms/{form_id}/results. Forms breadcrumbs use normal navigation, preserving the existing
+browser unload warning for unsaved edits. No new dependencies or infrastructure were added.
+
+Workspace API listing joins forms/publications with counts of submissions across ALL
+versions. Create persists an empty draft via the existing service. Rename modifies only
+the draft title and does not mutate snapshots. Duplicate serializes the current saved draft,
+allocates fresh form/question/option IDs, then saves it atomically as an unpublished form
+with a fresh public ID and no history/responses. Titles gain a bounded ' (copy)' suffix.
+
+Confirmed Delete warns that responses and public access will be removed. Its BEGIN IMMEDIATE
+transaction deletes answers, submissions, publication, versions, options, questions and the
+form in foreign-key order. The publication's removal is the database trigger prerequisite
+for deleting snapshots. Any failure rolls back every row. Other forms are unaffected.
+This is a permanent delete, not archive/soft delete; prior submission acknowledgements are
+also removed. A submit and delete are serialized by the same SQLite writer lock.
+
+Results metadata returns explicit versions and per-version response counts. The selected
+version endpoint returns its snapshot, submissions/answers and calculated summaries. An
+individual response endpoint checks form ownership and returns its own snapshot even when
+questions/options later change or disappear. Display helpers resolve labels from that
+snapshot and test key presence, preserving 0/false and distinguishing optional omissions.
+
+Summaries include answered/unanswered counts, all configured option buckets (including zero
+counts), Yes/No and fixed1–5 rating distributions, text/email values and numeric minimum/
+maximum. No summaries mix versions, and no views/completion-rate data is invented. Tables
+scroll horizontally inside their region; summary cards use the reference's white-on-grey
+layout. The latest version is selected initially and the selector/UUID make that explicit.
+Results currently load one version's full response set; pagination is deferred for demo scale.
+
+Theme/thank-you settings are focusable aria-disabled placeholders labelled Coming Soon.
+Dashboard mutations provide status toasts, dialogs and retry/error states. User confirmation
+is required by the UI for delete; the API is a shared creator API, not a permission boundary.
 
 ## Schema
 
@@ -84,7 +121,7 @@ migration in migrations_v3.py: back up through SQLite's backup API, create four 
 indexes/immutability triggers, allocate public IDs for existing forms and record version3.
 All existing draft columns/rows remain untouched. The backup is
 <database filename>.stage2-backup.sqlite3 beside the configured file; an existing backup
-is never overwritten. Fresh setup runs both migrations. Repeat startup is a no-op; unknown
+is never overwritten. Fresh setup runs these migrations followed by Stage 4 below. Repeat startup is a no-op; unknown
 versions fail without resetting data. No automatic downgrade exists.
 
 Stop the prior backend before upgrading; use the same SQLITE_PATH. It is absolute or
@@ -96,6 +133,12 @@ Hosting persistence is unresolved. Before deployment approval, choose a persiste
 and budget, then create a draft/submission, restart, redeploy a changed build, and retrieve
 identical IDs/values after each. Keep database/journals under the mount and establish a
 SQLite-safe backup/restore procedure. No paid resource or deployment was created.
+
+Stage 4 retains all prior migration code and adds 3 -> 4 in migrations_v4.py. It creates
+<database filename>.stage3-backup.sqlite3 and transactionally replaces only the snapshot
+DELETE trigger. No tables, row values, IDs or public links are rewritten. Updates remain
+unconditionally blocked. Unpublished forms still have publication records and retain their
+protected history. Fresh databases traverse the full chain; schema version is now4.
 
 ## UI references and limits
 
@@ -112,6 +155,10 @@ answers. Transitions use CSS with a prefers-reduced-motion override. Field error
 with the controls and focus the relevant answer. Narrow screens retain vertical scrolling
 for long questions/options rather than clipping content.
 
-Multiple creator tabs still use last-successful-save-wins. Results, form-list management,
-seeds and deployment remain later stages. Future results must use snapshot wording/options
-and group summaries by version. A duplicate should receive new IDs and no response history.
+Stage 4 reinspected workspace01, responses08 and summary09. The workspace content is a
+loading screen: only its header/navigation is usable, so form-card placement is an adaptation.
+Responses and summary references contain usable table/card layouts. No AI/integration,
+performance or views controls were added.
+
+Multiple creator tabs still use last-successful-save-wins. Repeatable sample seeding and
+final deployment remain for the next stage; no commit/push/deploy occurred in this stage.

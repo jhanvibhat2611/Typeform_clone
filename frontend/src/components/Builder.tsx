@@ -188,7 +188,7 @@ export function Builder() {
   return <div className="builder-shell">
     <header className="app-header">
       <div className="breadcrumbs">
-        <FileText size={17} aria-hidden="true" /><span>Forms</span><ChevronRight size={15} />
+        <FileText size={17} aria-hidden="true" /><a href="/">Forms</a><ChevronRight size={15} />
         <input aria-label="Form title" value={draft.title} disabled={busy}
           aria-invalid={Boolean(errors.title)} placeholder="Name your form"
           onChange={(event) => update({ ...draft, title: event.target.value })} />
@@ -197,6 +197,7 @@ export function Builder() {
       <div className="content-tab">Content</div>
       <div className="header-actions">
         <span className={"save-status " + status} role="status"><span className="status-dot" />{statusLabels[status]}</span>
+        <a className="secondary" href={"/forms/" + draft.id + "/results"} aria-disabled={busy || !savedJson} onClick={event => { if (busy || !savedJson) event.preventDefault(); }}>Results</a>
         <button className="secondary" onClick={() => setShareOpen(true)} disabled={busy || !publication}>Share</button>
         <button className="secondary" onClick={createNew} disabled={busy}>New form</button>
         <button className="primary" onClick={save} disabled={busy || !dirty}>{busy ? "Saving…" : "Save"}</button>
@@ -246,6 +247,11 @@ export function Builder() {
         {selected ? <QuestionSettings question={selected} disabled={busy} errors={errors}
           onChange={updateQuestion} onTypeChange={(type) => switchType(selected, type)} /> :
           <p className="empty-hint">Select or add a question to edit its settings.</p>}
+        <section className="settings-placeholders" aria-label="Form settings">
+          <h2>Form settings</h2>
+          <button type="button" aria-disabled="true">Theme <span>Coming Soon</span></button>
+          <button type="button" aria-disabled="true">Thank-you screen <span>Coming Soon</span></button>
+        </section>
       </aside>
     </main>
     {shareOpen && publication && <ShareDialog publication={publication} onClose={() => setShareOpen(false)} />}

@@ -217,5 +217,5 @@ class StageTwoMigrationTest(unittest.TestCase):
             with closing(sqlite3.connect(path)) as db:
                 for table, rows in before.items():
                     self.assertEqual(db.execute('SELECT * FROM '+table).fetchall(),rows)
-                self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],3)
+                self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],4)
             self.assertTrue(path.with_name(path.name+'.stage2-backup.sqlite3').exists())

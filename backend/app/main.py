@@ -11,6 +11,8 @@ from .database import database_path, make_engine, make_session_factory
 from .forms import router
 from .migrations import migrate
 from .publication import router as publication_router
+from .workspace import router as workspace_router
+from .results import router as results_router
 
 
 def create_app(path: Path | None = None) -> FastAPI:
@@ -25,7 +27,7 @@ def create_app(path: Path | None = None) -> FastAPI:
         finally:
             engine.dispose()
 
-    app = FastAPI(title="Typeform assignment — Stage 3", lifespan=lifespan)
+    app = FastAPI(title="Typeform assignment — Stage 4", lifespan=lifespan)
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(_request, exc):
@@ -38,9 +40,11 @@ def create_app(path: Path | None = None) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[origin.strip() for origin in origins.split(",") if origin.strip()],
-        allow_methods=["GET", "PUT", "POST"],
+        allow_methods=["GET", "PUT", "POST", "PATCH", "DELETE"],
         allow_headers=["Content-Type"],
     )
+    app.include_router(workspace_router)
+    app.include_router(results_router)
     app.include_router(router)
     app.include_router(publication_router)
 
