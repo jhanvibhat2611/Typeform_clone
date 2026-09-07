@@ -176,3 +176,19 @@ tests, typecheck and production build passed. Read-only browser checks verified 
 400/500 weights, inherited control fonts, card containment and no horizontal page overflow at
 1920, 1280 and 390 CSS pixels. Desktop/mobile screenshots were inspected; existing two-line
 question-card truncation remains intentional. Original font matching remains approximate.
+
+## Bounded builder sizing correction
+
+Measured the production builder at 1280x600 CSS pixels / DPR 1.5 (1920x900 screenshot).
+The source 64 px toolbar and 306 px preview produced 96 and 459 image pixels. Builder-only
+bounded viewport lengths now produce a 72 px toolbar and approximately 305 px preview,
+centered in the canvas. Toolbar top moved from 120 to approximately 98 image pixels;
+preview top from 252 to approximately 206 (the supplied reference is near 196). Pages,
+Endings and card text now render near 20 image pixels with smaller card padding.
+
+Inspected .artifacts/builder-sizing-after.png from the production build. All 9 frontend
+tests, typecheck, production build and whitespace check passed. The current font family
+and weight rules are unchanged. Only builder layout rules changed; public respondent,
+dropdown implementation, motion, thank-you screen, backend and stored records are untouched.
+Narrow layouts retain responsive preview width and the existing larger text/card treatment.
+Preview text wraps within its narrower paper; no additional cosmetic changes were made.
